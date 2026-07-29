@@ -19,6 +19,13 @@ function readEnv() {
     rateLimitMaxRequests: parseInt(process.env.RATE_LIMIT_MAX_REQUESTS || "100", 10),
     maxPdfUploadBytes: parseInt(process.env.MAX_PDF_UPLOAD_BYTES || "10485760", 10),
     maxImageUploadBytes: parseInt(process.env.MAX_IMAGE_UPLOAD_BYTES || "5242880", 10),
+    // Number of reverse-proxy hops to trust for X-Forwarded-For (Express's
+    // `trust proxy` setting). 0 (default) = trust nothing, correct for
+    // `npm run dev` where nothing sits in front of the backend. Set to 1 in
+    // the Docker Compose deployment, where nginx is exactly one hop away —
+    // trusting X-Forwarded-For with nothing actually proxying is what lets a
+    // client spoof its own IP and bypass rate limiting.
+    trustProxy: parseInt(process.env.TRUST_PROXY || "0", 10),
   };
 
   if (env.nodeEnv === "production") {

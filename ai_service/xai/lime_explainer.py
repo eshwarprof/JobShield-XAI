@@ -12,7 +12,15 @@ from ai_service.bert_model.predict import predict_proba_batch
 
 CLASS_NAMES = ["legitimate", "fraudulent"]
 DEFAULT_NUM_FEATURES = 10
-DEFAULT_NUM_SAMPLES = 500
+# 500 (LIME's own library default) reliably exceeded 100s of wall-clock time
+# per request under CPU-only inference — confirmed by actually running a
+# request through the full Docker Compose stack (no GPU passthrough
+# configured there, consistent with NFR-1's CPU-serving support) and
+# watching it time out twice even after ruling out the one-time tokenizer
+# download as the cause. 150 is LIME's own commonly-cited "fast" setting for
+# text and keeps a single analysis within a realistic request/response cycle
+# without dropping local explanations altogether.
+DEFAULT_NUM_SAMPLES = 150
 
 
 def generate_local_explanation(
