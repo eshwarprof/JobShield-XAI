@@ -1,4 +1,5 @@
-import { Card } from '@/components/ui/Card';
+import { Gauge, Info, ShieldQuestion, Sparkles } from 'lucide-react';
+import { Card, CardHeader, CardTitle } from '@/components/ui/Card';
 import { RiskBadge } from '@/components/dashboard/RiskBadge';
 
 /** SRS Section 2.6: an in-app help/about panel explaining trust score bands,
@@ -6,7 +7,7 @@ import { RiskBadge } from '@/components/dashboard/RiskBadge';
  * FastAPI OpenAPI docs. */
 export function AboutPage() {
   return (
-    <div className="mx-auto max-w-3xl space-y-8">
+    <div className="mx-auto max-w-3xl animate-fade-in-up space-y-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900 dark:text-white">About this framework</h1>
         <p className="mt-2 text-slate-600 dark:text-slate-400">
@@ -17,7 +18,12 @@ export function AboutPage() {
       </div>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Reading the Trust Score</h2>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Gauge className="h-4 w-4 text-brand-600" aria-hidden="true" />
+            <CardTitle>Reading the Trust Score</CardTitle>
+          </div>
+        </CardHeader>
         <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
           A 0–100 score, starting at 100, with points deducted for specific red flags (a requested registration
           fee, a personal email domain instead of an official one, a missing company profile, an unrealistic
@@ -32,7 +38,12 @@ export function AboutPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">Reading the Risk Category</h2>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <ShieldQuestion className="h-4 w-4 text-brand-600" aria-hidden="true" />
+            <CardTitle>Reading the Risk Category</CardTitle>
+          </div>
+        </CardHeader>
         <p className="mb-3 text-sm text-slate-600 dark:text-slate-400">
           Combines the AI model's fraud probability with the Trust Score into one overall category.
         </p>
@@ -45,7 +56,12 @@ export function AboutPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">What SHAP and LIME mean</h2>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Sparkles className="h-4 w-4 text-brand-600" aria-hidden="true" />
+            <CardTitle>What SHAP and LIME mean</CardTitle>
+          </div>
+        </CardHeader>
         <p className="text-sm text-slate-600 dark:text-slate-400">
           <strong>LIME</strong> explains this one specific posting — which words in it pushed the prediction
           toward "fraudulent" or "legitimate." <strong>SHAP</strong> shows what the model relies on
@@ -55,7 +71,12 @@ export function AboutPage() {
       </Card>
 
       <Card>
-        <h2 className="mb-3 font-semibold text-slate-900 dark:text-white">A tool, not a verdict</h2>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Info className="h-4 w-4 text-brand-600" aria-hidden="true" />
+            <CardTitle>A tool, not a verdict</CardTitle>
+          </div>
+        </CardHeader>
         <p className="text-sm text-slate-600 dark:text-slate-400">
           This system is a decision-support aid. Always independently verify a company's official website and
           contact channels, and never pay a fee to apply for or be hired into a job.
