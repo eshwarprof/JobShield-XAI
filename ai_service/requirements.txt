@@ -38,8 +38,11 @@ motor==3.7.1
 requests==2.34.2
 beautifulsoup4==4.15.0
 validators==0.35.0
-pypdf==6.14.2
-pdf2image==1.17.0
+# PyMuPDF handles both text extraction and page rasterization (for the
+# scanned-PDF OCR fallback) without needing the poppler system binary that
+# pdf2image would require — verified neither poppler nor tesseract is
+# preinstalled on the dev machine, so pure-pip libraries were prioritized.
+pymupdf==1.28.0
 pillow==12.3.0
 easyocr==1.7.2
 pytesseract==0.3.13
