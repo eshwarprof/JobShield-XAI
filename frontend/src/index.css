@@ -21,15 +21,20 @@
   --color-risk-critical: #dc2626;
   --color-risk-critical-bg: #fee2e2;
 
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-400: #818cf8;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-800: #3730a3;
-  --color-brand-900: #312e81;
+  /* "Job Board/Recruitment" palette from ui-ux-pro-max's color database —
+     a deep security blue reads as trustworthy/professional for a fraud-
+     detection product in a way the previous generic indigo didn't, and it's
+     the one recommendation that's actually about a recruitment product
+     rather than a generic "SaaS" match. */
+  --color-brand-50: #f0f9ff;
+  --color-brand-100: #e0f2fe;
+  --color-brand-200: #bae6fd;
+  --color-brand-400: #38bdf8;
+  --color-brand-500: #0ea5e9;
+  --color-brand-600: #0369a1;
+  --color-brand-700: #075985;
+  --color-brand-800: #0c4a6e;
+  --color-brand-900: #082f49;
 
   /* Soft, low-opacity elevation — premium SaaS UIs (Linear, Vercel, Stripe)
      favor subtle multi-stop shadows over Tailwind's default flat ones. */

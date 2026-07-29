@@ -1,15 +1,27 @@
 import type { ReactNode } from 'react';
+import { useLocation } from 'react-router-dom';
+import { AnimatePresence, motion } from 'motion/react';
 import { Navbar } from '@/components/layout/Navbar';
 
 export function Layout({ children }: { children: ReactNode }) {
+  const location = useLocation();
+
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">{children}</main>
-      <footer className="border-t border-slate-200 py-6 text-center text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-        Explainable Fake Job Advertisement Detection Framework — SDC-II project. Not a substitute for your own
-        judgment; always independently verify an employer before applying or paying anything.
-      </footer>
+      <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6 sm:py-10">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.div
+            key={location.pathname}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18, ease: 'easeOut' }}
+          >
+            {children}
+          </motion.div>
+        </AnimatePresence>
+      </main>
     </div>
   );
 }

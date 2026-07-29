@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, LogOut, Menu, ShieldCheck, User as UserIcon, X } from 'lucide-react';
+import { Home, LayoutDashboard, LogOut, Menu, ShieldCheck, User as UserIcon, X } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuthStore } from '@/store/authStore';
 import { logout as apiLogout } from '@/api/auth';
@@ -59,6 +59,12 @@ export function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
+          <NavLink to="/" end className={NAV_LINK_CLASS}>
+            <span className="inline-flex items-center gap-1.5">
+              <Home className="h-4 w-4" aria-hidden="true" />
+              Home
+            </span>
+          </NavLink>
           <NavLink to="/analyze" className={NAV_LINK_CLASS}>
             Analyze
           </NavLink>
@@ -143,6 +149,9 @@ export function Navbar() {
               <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Theme</span>
               <ThemeToggle />
             </div>
+            <NavLink to="/" end className={NAV_LINK_CLASS}>
+              Home
+            </NavLink>
             <NavLink to="/analyze" className={NAV_LINK_CLASS}>
               Analyze
             </NavLink>
