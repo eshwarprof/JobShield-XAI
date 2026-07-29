@@ -1,6 +1,9 @@
 # --- Datasets & model artifacts (fetched/generated, not committed) ---
 ai_service/dataset/*.csv
 ai_service/dataset/*.json
+ai_service/dataset/processed/
+# Note: docs/eda/ (report + charts) IS committed intentionally — it's small,
+# reviewable documentation of real analysis, not a bulk data artifact.
 ai_service/models_store/**
 !ai_service/models_store/.gitkeep
 ai_service/**/runs/
