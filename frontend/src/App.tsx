@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'sonner';
 import { Layout } from '@/components/layout/Layout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { useAuthStore } from '@/store/authStore';
@@ -44,6 +45,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster theme="system" position="top-right" richColors closeButton />
       <BrowserRouter>
         <Layout>
           <Routes>

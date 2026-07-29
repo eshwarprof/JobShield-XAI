@@ -32,20 +32,33 @@ export function ExplanationBarChart({ features, valueKey, maxFeatures = 10 }: Pr
   const data = toChartData(features, valueKey, maxFeatures);
 
   if (data.length === 0) {
-    return <p className="py-6 text-center text-sm text-slate-500">No explanation data available.</p>;
+    return (
+      <p className="py-6 text-center text-sm text-slate-500 dark:text-slate-400">No explanation data available.</p>
+    );
   }
 
   return (
     <ResponsiveContainer width="100%" height={Math.max(200, data.length * 32)}>
       <BarChart data={data} layout="vertical" margin={{ left: 8, right: 16 }}>
         <CartesianGrid strokeDasharray="3 3" horizontal={false} className="stroke-slate-200 dark:stroke-slate-700" />
-        <XAxis type="number" tick={{ fontSize: 12 }} />
-        <YAxis type="category" dataKey="feature" width={110} tick={{ fontSize: 12 }} />
+        <XAxis type="number" tick={{ fontSize: 12, fill: 'currentColor' }} className="text-slate-500" />
+        <YAxis
+          type="category"
+          dataKey="feature"
+          width={110}
+          tick={{ fontSize: 12, fill: 'currentColor' }}
+          className="text-slate-600 dark:text-slate-300"
+        />
         <Tooltip
           formatter={(value) => (typeof value === 'number' ? value.toFixed(4) : String(value))}
-          contentStyle={{ fontSize: 12, borderRadius: 8 }}
+          contentStyle={{
+            fontSize: 12,
+            borderRadius: 8,
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 12px -2px rgb(15 23 42 / 0.1)',
+          }}
         />
-        <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+        <Bar dataKey="value" radius={[0, 4, 4, 0]} animationDuration={400}>
           {data.map((entry, i) => (
             <Cell key={i} fill={colorForValue(entry.value)} />
           ))}

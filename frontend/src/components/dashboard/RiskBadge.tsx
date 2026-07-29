@@ -1,6 +1,10 @@
+import { AlertTriangle, ShieldAlert, ShieldCheck, ShieldQuestion } from 'lucide-react';
 import type { RiskCategory } from '@/types';
+import { Badge, type BadgeSize } from '@/components/ui/Badge';
 
-// IR-3: risk categories are color-coded consistently across the app.
+// IR-3: risk categories are color-coded consistently across the app. The
+// `text-risk-*` class names are asserted verbatim in RiskBadge.test.tsx —
+// keep them as literal Tailwind classes here, not composed indirectly.
 const RISK_STYLES: Record<RiskCategory, string> = {
   Low: 'bg-risk-low-bg text-risk-low',
   Medium: 'bg-risk-medium-bg text-risk-medium',
@@ -8,11 +12,19 @@ const RISK_STYLES: Record<RiskCategory, string> = {
   Critical: 'bg-risk-critical-bg text-risk-critical',
 };
 
-export function RiskBadge({ category, size = 'md' }: { category: RiskCategory; size?: 'sm' | 'md' | 'lg' }) {
-  const sizeClasses = size === 'lg' ? 'px-4 py-2 text-base' : size === 'sm' ? 'px-2 py-0.5 text-xs' : 'px-3 py-1 text-sm';
+const RISK_ICON: Record<RiskCategory, typeof ShieldCheck> = {
+  Low: ShieldCheck,
+  Medium: ShieldQuestion,
+  High: ShieldAlert,
+  Critical: AlertTriangle,
+};
+
+export function RiskBadge({ category, size = 'md' }: { category: RiskCategory; size?: BadgeSize }) {
+  const Icon = RISK_ICON[category];
   return (
-    <span className={`inline-flex items-center rounded-full font-semibold ${RISK_STYLES[category]} ${sizeClasses}`}>
+    <Badge size={size} className={RISK_STYLES[category]}>
+      <Icon className={size === 'lg' ? 'h-4 w-4' : 'h-3.5 w-3.5'} aria-hidden="true" />
       {category} Risk
-    </span>
+    </Badge>
   );
 }
