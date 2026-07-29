@@ -1,0 +1,65 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+
+  ai_service:
+    build:
+      context: .
+      dockerfile: ai_service/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      ENVIRONMENT: production
+      MONGODB_URI: mongodb://mongo:27017/fake_job_detection
+      CORS_ALLOWED_ORIGINS: http://localhost:5000,http://localhost
+      OCR_ENGINE: easyocr
+    volumes:
+      # The trained model + SHAP cache are NOT baked into the image (they're
+      # gitignored/dockerignored — multi-GB artifacts don't belong in a
+      # rebuildable image). Train once on the host (see README) — this
+      # volume mount is what lets the container see that output without a
+      # rebuild.
+      - ./ai_service/models_store:/app/ai_service/models_store
+      - ./ai_service/dataset:/app/ai_service/dataset
+    depends_on:
+      - mongo
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      MONGODB_URI: mongodb://mongo:27017/fake_job_detection
+      AI_SERVICE_BASE_URL: http://ai_service:8000
+      CORS_ALLOWED_ORIGINS: http://localhost,http://localhost:5173
+      # Dev-only defaults — override via a real .env / secrets manager for
+      # any deployment reachable outside your own machine (see backend/config/env.js).
+      JWT_ACCESS_SECRET: change_me_access_secret_min_32_chars_docker
+      JWT_REFRESH_SECRET: change_me_refresh_secret_min_32_chars_docker
+    depends_on:
+      - mongo
+      - ai_service
+
+  frontend:
+    build:
+      context: .
+      dockerfile: frontend/Dockerfile
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  mongo_data:

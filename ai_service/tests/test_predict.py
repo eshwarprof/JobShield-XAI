@@ -10,9 +10,11 @@ def test_resolve_current_model_dir_raises_clear_error_when_untrained(monkeypatch
         predict.resolve_current_model_dir()
 
 
+@pytest.mark.slow
 class TestPredictProbaBatch:
     """Runs against the real trained model (models_store/) — these only pass
-    once `python -m ai_service.bert_model.train_model` has produced one."""
+    once `python -m ai_service.bert_model.train_model` has produced one, so
+    they're excluded from CI (which has no GPU/time budget to train one)."""
 
     def test_returns_correct_shape(self):
         probs = predict.predict_proba_batch(["a normal job posting", "urgent pay a fee now"])
