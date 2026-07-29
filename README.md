@@ -62,6 +62,10 @@ python ai_service/dataset/download_dataset.py
 cd ai_service
 python -m venv .venv
 .venv\Scripts\activate      # Windows
+
+# GPU (recommended — CPU-only inference is supported but training is much
+# slower): install the CUDA build of torch first, matching your driver.
+pip install torch==2.13.0 torchvision==0.28.0 --index-url https://download.pytorch.org/whl/cu130
 pip install -r requirements.txt
 
 # 3. Backend (Node.js)

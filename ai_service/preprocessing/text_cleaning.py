@@ -92,15 +92,18 @@ def strip_special_characters(text: str) -> str:
     return _NON_ALNUM_RE.sub(" ", text)
 
 
-def clean_text(text: str | None) -> str:
+def clean_text(text) -> str:
     """Full cleaning pipeline for one field (FR-2.1, FR-2.2, FR-2.6).
 
     Order matters: structural noise (HTML, URLs, emails, phones, emoji) is
     removed before lowercasing/character-stripping, since those regexes key
     off characters that character-stripping would otherwise destroy.
-    Missing/empty input returns "" rather than raising (FR-2.6).
+    Missing/empty input returns "" rather than raising (FR-2.6). Accepts
+    anything, not just `str | None` — pandas represents a missing CSV cell as
+    `float('nan')`, which is truthy in Python and would otherwise slip past a
+    plain `if not text` guard and crash `unicodedata.normalize`.
     """
-    if not text:
+    if not isinstance(text, str) or not text:
         return ""
     text = normalize_unicode(text)
     text = strip_html(text)

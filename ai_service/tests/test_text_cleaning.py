@@ -39,6 +39,13 @@ def test_clean_text_handles_missing_input():
     assert clean_text("") == ""
 
 
+def test_clean_text_handles_pandas_nan():
+    # pandas represents a missing CSV cell as float('nan'), which is truthy
+    # in Python — a naive `if not text` guard would let it through and crash
+    # unicodedata.normalize (regression: found while testing EmscadDataset).
+    assert clean_text(float("nan")) == ""
+
+
 def test_clean_text_lowercases_and_strips_special_characters():
     result = clean_text("URGENT!!! Job @ Company$$$")
     assert result == result.lower()
