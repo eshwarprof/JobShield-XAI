@@ -71,9 +71,27 @@ def detect_personal_email_domain(fields: dict) -> bool:
     return domain in FREE_EMAIL_DOMAINS if domain else False
 
 
+_UNSTRUCTURED_SUBSTANTIAL_LENGTH = 150
+
+
 def detect_missing_company_profile(fields: dict) -> bool:
-    profile = str(fields.get("company_profile") or "").strip()
-    return len(profile) < 20
+    """A dedicated `company_profile` field only exists for URL-scraped input
+    with JSON-LD data (SRS 6.1.1's field list assumes EMSCAD-style structured
+    records). The text/PDF/OCR channels put everything into `description`
+    with no field separation at all — checking the `company_profile` field
+    alone would flag it "missing" on *every* text/PDF/image submission
+    regardless of content, unfairly penalizing detailed, legitimate
+    unstructured postings (found by testing a real legitimate posting through
+    the text channel and seeing an unwarranted -20 penalty).
+
+    Distinguishes "the field key is present but empty" (a structured channel
+    genuinely found no company profile — a real miss) from "the field key
+    was never set at all" (the channel has no field concept — fall back to
+    overall text substance as a weaker, non-systematically-biased proxy).
+    """
+    if "company_profile" in fields:
+        return len(str(fields.get("company_profile") or "").strip()) < 20
+    return len(_full_text(fields).strip()) < _UNSTRUCTURED_SUBSTANTIAL_LENGTH
 
 
 def detect_missing_company_website(fields: dict) -> bool:

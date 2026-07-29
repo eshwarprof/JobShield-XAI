@@ -63,6 +63,35 @@ def test_missing_company_profile():
     assert detect_missing_company_profile(FRAUD_FIELDS) is True
 
 
+def test_missing_company_profile_falls_back_to_overall_substance_when_unstructured():
+    # Regression: found via a real browser walkthrough of the text-input
+    # channel — a detailed legitimate posting submitted as raw text (no
+    # company_profile field at all, everything lands in `description`) was
+    # incorrectly dinged -20 for "missing company profile" every time,
+    # because the strict field check has nothing to check for that channel.
+    detailed_unstructured = {
+        "description": (
+            "KMIT invites applications for Assistant Professor in Computer Science. "
+            "Keshav Memorial Institute of Technology is an established engineering "
+            "college in Hyderabad affiliated to Osmania University."
+        )
+    }
+    assert "company_profile" not in detailed_unstructured
+    assert detect_missing_company_profile(detailed_unstructured) is False
+
+    sparse_unstructured = {"description": "urgent hiring now"}
+    assert detect_missing_company_profile(sparse_unstructured) is True
+
+    # A structured channel (e.g. URL scrape) that explicitly found no
+    # company profile should still be flagged, even if the rest of the ad
+    # is long — the field key being present and empty is a genuine miss.
+    structured_but_empty = {
+        "company_profile": "",
+        "description": "x" * 200,
+    }
+    assert detect_missing_company_profile(structured_but_empty) is True
+
+
 def test_missing_company_website():
     assert detect_missing_company_website(LEGIT_FIELDS) is False
     assert detect_missing_company_website(FRAUD_FIELDS) is True
