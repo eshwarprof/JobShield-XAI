@@ -27,12 +27,13 @@ from torch.utils.data import DataLoader
 from ai_service.bert_model.dataset import EmscadDataset
 from ai_service.bert_model.predict import get_model
 from ai_service.bert_model.train_model import BASELINE_ACCURACY, BASELINE_F1
+from ai_service.config.business_rules import DEFAULT_FRAUD_DECISION_THRESHOLD
 
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "dataset" / "processed"
 REPORT_PATH = Path(__file__).resolve().parents[2] / "docs" / "model_evaluation_report.md"
 
 
-def run(batch_size: int = 32) -> dict:
+def run(batch_size: int = 32, decision_threshold: float = DEFAULT_FRAUD_DECISION_THRESHOLD) -> dict:
     test_dataset = EmscadDataset(PROCESSED_DIR / "test.csv")
     loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
 
@@ -48,7 +49,10 @@ def run(batch_size: int = 32) -> dict:
 
             logits = model(input_ids=input_ids, attention_mask=attention_mask).logits
             probs = torch.softmax(logits, dim=1)[:, 1].cpu().numpy()
-            preds = np.argmax(logits.cpu().numpy(), axis=1)
+            # Use the same decision_threshold predict.py applies at serving
+            # time (Appendix D item 1) — NOT a naive argmax/0.5 split, so this
+            # report reflects the system's actual production behavior.
+            preds = (probs >= decision_threshold).astype(int)
 
             all_preds.extend(preds.tolist())
             all_labels.extend(labels.tolist())
@@ -63,18 +67,19 @@ def run(batch_size: int = 32) -> dict:
     }
     cm = confusion_matrix(all_labels, all_preds).tolist()
 
-    _write_report(metrics, cm, n=len(all_labels))
+    _write_report(metrics, cm, n=len(all_labels), decision_threshold=decision_threshold)
     print(json.dumps({"metrics": metrics, "confusion_matrix": cm}, indent=2))
     return metrics
 
 
-def _write_report(metrics: dict, confusion: list, n: int) -> None:
+def _write_report(metrics: dict, confusion: list, n: int, decision_threshold: float) -> None:
     meets_baseline = metrics["f1"] >= BASELINE_F1 and metrics["accuracy"] >= BASELINE_ACCURACY
     lines = [
         "# BERT Fraud Classifier — Held-Out Test Evaluation",
         "",
         f"Evaluated on {n} held-out test examples (never seen during training or "
-        "validation-based early stopping/model selection).",
+        "validation-based early stopping/model selection), using the production "
+        f"decision threshold of {decision_threshold} (tuned on the validation set).",
         "",
         "## Metrics",
         "",

@@ -69,13 +69,16 @@ def predict_fraud_probability(
     return {"fraud_probability": fraud_probability, "prediction_label": label}
 
 
-def predict_proba_batch(texts: list[str], batch_size: int = 16) -> np.ndarray:
+def predict_proba_batch(texts, batch_size: int = 16) -> np.ndarray:
     """Batch class-probability prediction, shape (len(texts), 2).
 
     Used by the XAI layer (SHAP/LIME need a model-agnostic `texts -> probs`
     function to perturb inputs against), not by the main single-instance
-    request path.
+    request path. Accepts anything iterable of strings — SHAP's masker calls
+    this with a numpy array of dtype=object rather than a plain list, whose
+    slices the tokenizer rejects unless coerced to `list[str]` first.
     """
+    texts = [str(t) for t in texts]
     model = get_model()
     tokenizer = get_tokenizer()
     device = next(model.parameters()).device

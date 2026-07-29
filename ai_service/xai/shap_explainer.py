@@ -29,6 +29,16 @@ DEFAULT_SAMPLE_SIZE = 40
 DEFAULT_TOP_N = 25
 CACHE_FILENAME = "shap_global_importance.json"
 
+# A word/token that appears in only one sampled advertisement can still get a
+# large SHAP magnitude (e.g. a rare identifier or a data-quality artifact
+# from an individual posting) without being a genuine *global* pattern —
+# discovered by inspecting real cached output, where every top-ranked
+# "feature" had occurrences=1 (nonsense tokens like raw hex-looking strings,
+# not words that actually recur across postings). Requiring a minimum repeat
+# count is what makes this a population-level explanation (FR-8.1) rather
+# than an accidental per-instance outlier.
+MIN_OCCURRENCES_FOR_GLOBAL_RANKING = 2
+
 PROCESSED_DIR = Path(__file__).resolve().parents[1] / "dataset" / "processed"
 
 
@@ -65,6 +75,13 @@ def compute_global_shap_importance(sample_texts: list[str], top_n: int = DEFAULT
             if normalized:
                 word_scores[normalized].append(float(value))
 
+    min_occurrences = MIN_OCCURRENCES_FOR_GLOBAL_RANKING
+    qualifying = {w: v for w, v in word_scores.items() if len(v) >= min_occurrences}
+    if not qualifying:
+        # Tiny sample (e.g. a handful of texts in a test) — fall back rather
+        # than returning an empty explanation.
+        qualifying = word_scores
+
     ranked = sorted(
         (
             {
@@ -73,7 +90,7 @@ def compute_global_shap_importance(sample_texts: list[str], top_n: int = DEFAULT
                 "mean_abs_impact": float(np.mean(np.abs(values))),
                 "occurrences": len(values),
             }
-            for word, values in word_scores.items()
+            for word, values in qualifying.items()
         ),
         key=lambda row: row["mean_abs_impact"],
         reverse=True,

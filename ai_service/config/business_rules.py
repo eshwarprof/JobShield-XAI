@@ -9,9 +9,10 @@ these numbers elsewhere; import from this module instead.
 from __future__ import annotations
 
 # --- Module 2: BERT classifier decision threshold (SRS FR-3.3, Appendix D item 1) ---
-# Default 0.5; re-tuned against the held-out validation set's optimal F1 after
-# training (see ai_service/bert_model/train_model.py) and overridable via env var.
-DEFAULT_FRAUD_DECISION_THRESHOLD = 0.5
+# Tuned by sweeping thresholds against the validation set's F1 after the
+# 2026-07-29 training run (see docs/model_evaluation_report.md): 0.65 gave
+# F1 0.9055 vs 0.8984 at the naive 0.5 default. Re-sweep after any retrain.
+DEFAULT_FRAUD_DECISION_THRESHOLD = 0.65
 
 # --- Module 3: Trust Score penalties (SRS Section 7.1) ---
 # Trust Score = 100 - sum(applicable penalties). Clamped to [0, 100].
