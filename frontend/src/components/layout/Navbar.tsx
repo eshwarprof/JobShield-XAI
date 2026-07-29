@@ -14,6 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/DropdownMenu';
 import { cn } from '@/lib/cn';
+import { ThemeToggle } from '@/components/layout/ThemeToggle';
 
 const NAV_LINK_CLASS = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -54,7 +55,7 @@ export function Navbar() {
       <nav className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3 sm:px-6">
         <Link to="/" className="flex items-center gap-2 text-lg font-bold text-slate-900 dark:text-white">
           <ShieldCheck className="h-6 w-6 text-brand-600" aria-hidden="true" />
-          FraudGuard
+          JobShield-XAI
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
@@ -77,6 +78,7 @@ export function Navbar() {
         </div>
 
         <div className="hidden items-center gap-3 md:flex">
+          <ThemeToggle />
           {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -137,6 +139,10 @@ export function Navbar() {
       {mobileOpen && (
         <div className="border-t border-slate-200 px-4 py-3 dark:border-slate-800 md:hidden">
           <div className="flex flex-col gap-1">
+            <div className="mb-1 flex items-center justify-between rounded-md px-3 py-2">
+              <span className="text-sm font-medium text-slate-600 dark:text-slate-300">Theme</span>
+              <ThemeToggle />
+            </div>
             <NavLink to="/analyze" className={NAV_LINK_CLASS}>
               Analyze
             </NavLink>

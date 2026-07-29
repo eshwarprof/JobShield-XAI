@@ -1,5 +1,5 @@
 {
-  "name": "fake-job-detection-frontend",
+  "name": "jobshield-xai-frontend",
   "private": true,
   "version": "0.0.0",
   "type": "module",

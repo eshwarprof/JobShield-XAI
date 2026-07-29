@@ -5,6 +5,7 @@ import { Toaster } from 'sonner';
 import { Layout } from '@/components/layout/Layout';
 import { ProtectedRoute } from '@/components/layout/ProtectedRoute';
 import { useAuthStore } from '@/store/authStore';
+import { applyTheme, useThemeStore } from '@/store/themeStore';
 import { me, refresh } from '@/api/auth';
 import { LandingPage } from '@/pages/LandingPage';
 import { LoginPage } from '@/pages/LoginPage';
@@ -23,6 +24,18 @@ const queryClient = new QueryClient({
 
 function App() {
   const { setSession, setInitializing } = useAuthStore();
+  const theme = useThemeStore((s) => s.theme);
+
+  useEffect(() => {
+    // Keeps a "system" choice live if the OS preference changes while the
+    // app is open (a manual "light"/"dark" choice is unaffected by this).
+    const media = window.matchMedia('(prefers-color-scheme: dark)');
+    function handleChange() {
+      if (useThemeStore.getState().theme === 'system') applyTheme('system');
+    }
+    media.addEventListener('change', handleChange);
+    return () => media.removeEventListener('change', handleChange);
+  }, []);
 
   useEffect(() => {
     // Silent session restore: the refresh token lives in an httpOnly cookie,
@@ -45,7 +58,7 @@ function App() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Toaster theme="system" position="top-right" richColors closeButton />
+      <Toaster theme={theme} position="top-right" richColors closeButton />
       <BrowserRouter>
         <Layout>
           <Routes>

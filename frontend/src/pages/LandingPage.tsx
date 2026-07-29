@@ -1,14 +1,13 @@
 import { Link } from 'react-router-dom';
-import { ArrowRight, FileSearch, MessageSquareText, ScanSearch, Sparkles } from 'lucide-react';
+import { ArrowDown, ArrowRight, FileSearch, MessageSquareText, ScanSearch, Sparkles } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
-import { Card } from '@/components/ui/Card';
 
 const STEPS: { title: string; body: string; icon: LucideIcon }[] = [
-  { title: 'Submit', body: 'Paste text, a URL, or upload a PDF/screenshot of the job advertisement.', icon: MessageSquareText },
-  { title: 'Analyze', body: 'A fine-tuned BERT model, plus rule-based trust and severity engines, assess it.', icon: ScanSearch },
-  { title: 'Understand', body: 'SHAP and LIME explain exactly why — no black-box verdict.', icon: FileSearch },
-  { title: 'Decide', body: 'Get a risk category and concrete, actionable recommendations.', icon: Sparkles },
+  { title: 'Upload', body: 'Paste text, a URL, or upload a PDF/screenshot of the job advertisement.', icon: MessageSquareText },
+  { title: 'AI Analysis', body: 'A fine-tuned BERT model, plus rule-based trust and severity engines, assess it.', icon: ScanSearch },
+  { title: 'Explainability', body: 'SHAP and LIME explain exactly why — no black-box verdict.', icon: FileSearch },
+  { title: 'Decision', body: 'Get a risk category and concrete, actionable recommendations.', icon: Sparkles },
 ];
 
 export function LandingPage() {
@@ -42,19 +41,38 @@ export function LandingPage() {
         </div>
       </section>
 
-      <section className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        {STEPS.map((step, i) => (
-          <Card key={step.title} className="transition-shadow duration-200 hover:shadow-soft-md">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-brand-100 dark:bg-brand-900/40">
-                <step.icon className="h-4 w-4 text-brand-600 dark:text-brand-400" aria-hidden="true" />
+      <section>
+        <h2 className="mb-8 text-center text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
+          From posting to decision, in one pass
+        </h2>
+        {/* A connected pipeline, not a feature grid: each stage flows into the
+            next (row + arrows on desktop, column + arrows on mobile) so the
+            sequence itself communicates the product's actual data flow. */}
+        <div className="flex flex-col items-stretch gap-2 lg:flex-row lg:items-start lg:gap-0">
+          {STEPS.map((step, i) => (
+            <div key={step.title} className="flex flex-1 flex-col items-center lg:flex-row">
+              <div className="flex w-full flex-col items-center rounded-xl border border-slate-200 bg-white p-5 text-center shadow-soft transition-shadow duration-200 hover:shadow-soft-md dark:border-slate-800 dark:bg-slate-900">
+                <div className="relative mb-3 flex h-11 w-11 items-center justify-center rounded-full bg-brand-100 dark:bg-brand-900/40">
+                  <step.icon className="h-5 w-5 text-brand-600 dark:text-brand-400" aria-hidden="true" />
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-brand-600 text-[10px] font-bold text-white dark:bg-brand-500">
+                    {i + 1}
+                  </span>
+                </div>
+                <h3 className="font-semibold text-slate-900 dark:text-white">{step.title}</h3>
+                <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{step.body}</p>
               </div>
-              <span className="text-xs font-semibold text-slate-300 dark:text-slate-600">0{i + 1}</span>
+              {i < STEPS.length - 1 && (
+                <>
+                  <ArrowDown className="my-1 h-4 w-4 shrink-0 text-slate-300 dark:text-slate-600 lg:hidden" aria-hidden="true" />
+                  <ArrowRight
+                    className="mx-2 hidden h-4 w-4 shrink-0 self-center text-slate-300 dark:text-slate-600 lg:block"
+                    aria-hidden="true"
+                  />
+                </>
+              )}
             </div>
-            <h3 className="font-semibold text-slate-900 dark:text-white">{step.title}</h3>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">{step.body}</p>
-          </Card>
-        ))}
+          ))}
+        </div>
       </section>
     </div>
   );

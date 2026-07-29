@@ -13,10 +13,12 @@ export async function getAdminStats() {
   return res.data;
 }
 
+export interface AdminUsersResponse {
+  users: User[];
+  pagination: { page: number; limit: number; total: number; pages: number };
+}
+
 export async function listAdminUsers(page = 1, limit = 20) {
-  const res = await apiClient.get<{ users: User[]; pagination: { total: number; pages: number } }>(
-    '/admin/users',
-    { params: { page, limit } }
-  );
+  const res = await apiClient.get<AdminUsersResponse>('/admin/users', { params: { page, limit } });
   return res.data;
 }

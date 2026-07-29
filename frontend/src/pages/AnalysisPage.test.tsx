@@ -1,8 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { MemoryRouter } from 'react-router-dom';
+import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AnalysisPage } from './AnalysisPage';
+import { AnalysisDetailPage } from './AnalysisDetailPage';
 import * as analysisApi from '@/api/analysis';
 
 vi.mock('@/api/analysis');
@@ -28,10 +30,16 @@ const FAKE_ANALYSIS = {
 };
 
 function renderPage() {
+  const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return render(
-    <MemoryRouter>
-      <AnalysisPage />
-    </MemoryRouter>
+    <QueryClientProvider client={queryClient}>
+      <MemoryRouter initialEntries={['/analyze']}>
+        <Routes>
+          <Route path="/analyze" element={<AnalysisPage />} />
+          <Route path="/analyze/:id" element={<AnalysisDetailPage />} />
+        </Routes>
+      </MemoryRouter>
+    </QueryClientProvider>
   );
 }
 
@@ -55,8 +63,9 @@ describe('AnalysisPage', () => {
     expect(analysisApi.submitText).not.toHaveBeenCalled();
   });
 
-  it('submits text and renders the resulting dashboard', async () => {
+  it('submits text and navigates to the result page for that analysis', async () => {
     vi.mocked(analysisApi.submitText).mockResolvedValue(FAKE_ANALYSIS);
+    vi.mocked(analysisApi.getAnalysisById).mockResolvedValue(FAKE_ANALYSIS);
     renderPage();
 
     await userEvent.type(
@@ -65,6 +74,7 @@ describe('AnalysisPage', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: /analyze/i }));
 
+    await waitFor(() => expect(analysisApi.getAnalysisById).toHaveBeenCalledWith('1'));
     await waitFor(() => expect(screen.getByText('Critical Risk')).toBeInTheDocument());
     expect(screen.getByText('Do NOT apply.')).toBeInTheDocument();
   });

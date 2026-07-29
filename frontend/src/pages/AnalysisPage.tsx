@@ -1,13 +1,13 @@
 import { useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, History, Image as ImageIcon, Link2, RotateCcw, Type, UploadCloud, X } from 'lucide-react';
+import { FileText, Image as ImageIcon, Link2, Type, UploadCloud, X } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
+import { Input } from '@/components/ui/Input';
 import { Alert } from '@/components/ui/Alert';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/Tabs';
-import { AnalysisDashboard } from '@/components/dashboard/AnalysisDashboard';
 import { submitFile, submitText, submitUrl } from '@/api/analysis';
 import { getApiErrorMessage } from '@/api/client';
 import { cn } from '@/lib/cn';
@@ -103,7 +103,6 @@ export function AnalysisPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<Analysis | null>(null);
   const navigate = useNavigate();
 
   async function handleSubmit(e: React.FormEvent) {
@@ -122,40 +121,14 @@ export function AnalysisPage() {
         if (!file) throw new Error(`Please choose a ${mode.toUpperCase()} file.`);
         analysis = await submitFile(mode, file);
       }
-      setResult(analysis);
+      // Each completed analysis gets its own URL (/analyze/:id) rather than
+      // living in local component state — refresh preserves it, browser back
+      // works naturally, and the result can be bookmarked or shared.
+      navigate(`/analyze/${analysis._id}`, { state: { fresh: true } });
     } catch (err) {
       setError(err instanceof Error && !('response' in err) ? err.message : getApiErrorMessage(err));
-    } finally {
       setIsSubmitting(false);
     }
-  }
-
-  function reset() {
-    setResult(null);
-    setText('');
-    setUrl('');
-    setFile(null);
-  }
-
-  if (result) {
-    return (
-      <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h1 className="text-xl font-bold text-slate-900 dark:text-white">Analysis Result</h1>
-          <div className="flex gap-2">
-            <Button variant="secondary" size="sm" onClick={reset}>
-              <RotateCcw className="h-4 w-4" aria-hidden="true" />
-              Analyze another
-            </Button>
-            <Button variant="secondary" size="sm" onClick={() => navigate('/history')}>
-              <History className="h-4 w-4" aria-hidden="true" />
-              View history
-            </Button>
-          </div>
-        </div>
-        <AnalysisDashboard analysis={result} />
-      </div>
-    );
   }
 
   return (
@@ -186,12 +159,13 @@ export function AnalysisPage() {
               />
             </TabsContent>
             <TabsContent value="url">
-              <input
+              <Input
+                label="Job posting URL"
                 type="url"
                 value={url}
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/careers/job-123"
-                className="h-10 w-full rounded-lg border border-slate-300 px-3 text-sm text-slate-900 outline-none transition-colors placeholder:text-slate-400 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:placeholder:text-slate-500 dark:focus:ring-brand-900/40"
+                icon={<Link2 className="h-4 w-4" aria-hidden="true" />}
               />
             </TabsContent>
             <TabsContent value="pdf">
