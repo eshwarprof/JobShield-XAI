@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/DropdownMenu';
 import { cn } from '@/lib/cn';
 import { ThemeToggle } from '@/components/layout/ThemeToggle';
+import { Link000 } from '@/components/ui/skiper-ui/skiper40';
 
 const NAV_LINK_CLASS = ({ isActive }: { isActive: boolean }) =>
   cn(
@@ -59,27 +60,27 @@ export function Navbar() {
         </Link>
 
         <div className="hidden items-center gap-1 md:flex">
-          <NavLink to="/" end className={NAV_LINK_CLASS}>
+          <Link000 href="/" className={NAV_LINK_CLASS({ isActive: location.pathname === '/' })}>
             <span className="inline-flex items-center gap-1.5">
               <Home className="h-4 w-4" aria-hidden="true" />
               Home
             </span>
-          </NavLink>
-          <NavLink to="/analyze" className={NAV_LINK_CLASS}>
+          </Link000>
+          <Link000 href="/analyze" className={NAV_LINK_CLASS({ isActive: location.pathname === '/analyze' })}>
             Analyze
-          </NavLink>
-          <NavLink to="/about" className={NAV_LINK_CLASS}>
+          </Link000>
+          <Link000 href="/about" className={NAV_LINK_CLASS({ isActive: location.pathname === '/about' })}>
             About
-          </NavLink>
+          </Link000>
           {user && (
-            <NavLink to="/history" className={NAV_LINK_CLASS}>
+            <Link000 href="/history" className={NAV_LINK_CLASS({ isActive: location.pathname === '/history' })}>
               History
-            </NavLink>
+            </Link000>
           )}
           {user?.role === 'admin' && (
-            <NavLink to="/admin" className={NAV_LINK_CLASS}>
+            <Link000 href="/admin" className={NAV_LINK_CLASS({ isActive: location.pathname === '/admin' })}>
               Admin
-            </NavLink>
+            </Link000>
           )}
         </div>
 

@@ -1,0 +1,1534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Explainable Fake Job Advertisement Detection Framework</title>
+  <!-- Load Inter font from Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --bg-dark: #0f172a;
+      --bg-slate: #1e293b;
+      --bg-slate-light: #334155;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --accent: #60a5fa;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --text-light: #f8fafc;
+      --text-muted: #94a3b8;
+      --card-border: rgba(255, 255, 255, 0.1);
+      --card-bg: rgba(30, 41, 59, 0.6);
+      --glass-blur: blur(12px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--bg-dark);
+      color: var(--text-light);
+      overflow: hidden;
+      height: 100vh;
+    }
+
+    /* Main Container Grid */
+    #app {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Sidebar Navigation */
+    .sidebar {
+      background-color: rgba(15, 23, 42, 0.95);
+      border-right: 1px solid var(--card-border);
+      width: 280px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      padding: 1.5rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 100;
+      backdrop-filter: var(--glass-blur);
+    }
+
+    .sidebar.collapsed {
+      width: 0px;
+      padding: 0;
+      overflow: hidden;
+      border-right: none;
+    }
+
+    .sidebar-header {
+      margin-bottom: 2rem;
+    }
+
+    .sidebar-header h2 {
+      font-size: 1.2rem;
+      font-weight: 800;
+      letter-spacing: -0.025em;
+      color: var(--primary);
+      text-transform: uppercase;
+    }
+
+    .sidebar-header p {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+    }
+
+    .slide-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      overflow-y: auto;
+      flex-grow: 1;
+      padding-right: 0.25rem;
+    }
+
+    .slide-list::-webkit-scrollbar {
+      width: 4px;
+    }
+    .slide-list::-webkit-scrollbar-thumb {
+      background: var(--bg-slate-light);
+      border-radius: 4px;
+    }
+
+    .slide-item {
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+
+    .slide-item:hover {
+      background-color: rgba(255, 255, 255, 0.05);
+      color: var(--text-light);
+    }
+
+    .slide-item.active {
+      background-color: rgba(59, 130, 246, 0.15);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* Slideshow Content Window */
+    .slide-viewer {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 3rem;
+      overflow: hidden;
+    }
+
+    .slides-container {
+      width: 100%;
+      max-width: 1200px;
+      height: 80vh;
+      position: relative;
+    }
+
+    .slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px);
+      transition: opacity 0.5s cubic-bezier(0.4, 0, 0.2, 1), transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .slide.active {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+      z-index: 10;
+    }
+
+    /* Typography inside Slides */
+    .slide-title-group {
+      margin-bottom: 2rem;
+      position: relative;
+    }
+
+    .slide-title {
+      font-size: 2.5rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      background: linear-gradient(135deg, #ffffff 30%, var(--accent));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+
+    .slide-divider {
+      width: 100px;
+      height: 4px;
+      background: linear-gradient(90deg, var(--primary), transparent);
+      border-radius: 2px;
+    }
+
+    .slide-body {
+      flex-grow: 1;
+      font-size: 1.1rem;
+      line-height: 1.6;
+      color: var(--text-light);
+    }
+
+    /* Layout Grids */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2.5rem;
+      align-items: start;
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+      backdrop-filter: var(--glass-blur);
+      transition: transform 0.3s, border-color 0.3s;
+    }
+
+    .card:hover {
+      border-color: rgba(59, 130, 246, 0.3);
+      transform: translateY(-2px);
+    }
+
+    .card-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    /* Custom slide templates styles */
+    .bullet-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .bullet-list li {
+      position: relative;
+      padding-left: 2rem;
+    }
+
+    .bullet-list li::before {
+      content: '→';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: bold;
+    }
+
+    .bullet-title {
+      font-weight: 600;
+      color: var(--text-light);
+    }
+
+    .bullet-desc {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      display: block;
+      margin-top: 0.25rem;
+    }
+
+    /* Tables */
+    .slide-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.95rem;
+    }
+
+    .slide-table th {
+      background-color: rgba(59, 130, 246, 0.15);
+      border-bottom: 2px solid rgba(59, 130, 246, 0.3);
+      color: var(--accent);
+      text-align: left;
+      padding: 0.85rem 1rem;
+      font-weight: 600;
+    }
+
+    .slide-table td {
+      padding: 0.85rem 1rem;
+      border-bottom: 1px solid var(--card-border);
+      color: var(--text-light);
+    }
+
+    .slide-table tr:hover td {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    /* Title Slide Custom Background */
+    .title-slide-container {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      height: 100%;
+      position: relative;
+    }
+
+    .title-glow {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .title-h1 {
+      font-size: 3.5rem;
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.15;
+      background: linear-gradient(135deg, #ffffff, #60a5fa 50%, #3b82f6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 1rem;
+      z-index: 2;
+    }
+
+    .title-sub {
+      font-size: 1.5rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      margin-bottom: 3rem;
+      max-width: 800px;
+      z-index: 2;
+    }
+
+    .title-meta {
+      display: flex;
+      gap: 3rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--card-border);
+      padding-top: 1.5rem;
+      z-index: 2;
+    }
+
+    .title-meta-item strong {
+      color: var(--accent);
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+
+    /* Highlight badge */
+    .badge {
+      display: inline-block;
+      padding: 0.25rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    .badge-success { background-color: rgba(16, 185, 129, 0.2); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.4); }
+    .badge-warning { background-color: rgba(245, 158, 11, 0.2); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.4); }
+    .badge-danger { background-color: rgba(239, 68, 68, 0.2); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.4); }
+    .badge-info { background-color: rgba(59, 130, 246, 0.2); color: var(--accent); border: 1px solid rgba(59, 130, 246, 0.4); }
+
+    /* Floating Navigation Controls */
+    .controls-panel {
+      position: absolute;
+      bottom: 2rem;
+      right: 2rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      background-color: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--card-border);
+      padding: 0.75rem 1.25rem;
+      border-radius: 50px;
+      backdrop-filter: var(--glass-blur);
+      z-index: 100;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+    }
+
+    .control-btn {
+      background: none;
+      border: none;
+      color: var(--text-light);
+      cursor: pointer;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background-color 0.2s;
+    }
+
+    .control-btn:hover {
+      background-color: var(--bg-slate-light);
+    }
+
+    .control-btn:disabled {
+      color: var(--text-muted);
+      cursor: not-allowed;
+    }
+
+    .counter {
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-muted);
+      min-width: 60px;
+      text-align: center;
+    }
+
+    .sidebar-toggle {
+      position: absolute;
+      bottom: 2rem;
+      left: 2rem;
+      background-color: rgba(30, 41, 59, 0.85);
+      border: 1px solid var(--card-border);
+      color: var(--text-light);
+      cursor: pointer;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      backdrop-filter: var(--glass-blur);
+      transition: background-color 0.2s;
+    }
+
+    .sidebar-toggle:hover {
+      background-color: var(--bg-slate-light);
+    }
+
+    /* Bottom Slide Progress Bar */
+    .progress-bar-container {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background-color: var(--bg-slate);
+      z-index: 100;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--primary), var(--accent));
+      transition: width 0.3s;
+    }
+
+    /* =============================================================
+       INTERACTIVE SVG ARCHITECTURE ANIMATIONS (Slide 4)
+       ============================================================= */
+    .svg-flowchart {
+      width: 100%;
+      height: 380px;
+      background-color: rgba(15, 23, 42, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .flow-node {
+      fill: var(--bg-slate);
+      stroke: var(--primary);
+      stroke-width: 2;
+      transition: all 0.3s;
+    }
+
+    .flow-node:hover {
+      fill: rgba(59, 130, 246, 0.15);
+      stroke-width: 3;
+      filter: drop-shadow(0 0 8px var(--primary));
+    }
+
+    .flow-text {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      fill: var(--text-light);
+      font-weight: 600;
+      text-anchor: middle;
+    }
+
+    .flow-text-sub {
+      font-family: 'Inter', sans-serif;
+      font-size: 10px;
+      fill: var(--text-muted);
+      text-anchor: middle;
+    }
+
+    .flow-link {
+      fill: none;
+      stroke: var(--bg-slate-light);
+      stroke-width: 2;
+      stroke-dasharray: 4 4;
+    }
+
+    /* Animated pulse dot traveling along paths */
+    .flow-pulse {
+      fill: var(--accent);
+      r: 5px;
+      filter: drop-shadow(0 0 4px var(--accent));
+    }
+
+    /* =============================================================
+       INTERACTIVE LIME SIMULATOR STYLES (Slide 7)
+       ============================================================= */
+    .lime-container {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 1.5rem;
+      height: 350px;
+    }
+
+    .posting-box {
+      background-color: rgba(15, 23, 42, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      font-family: 'Inter', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      overflow-y: auto;
+    }
+
+    .interactive-word {
+      padding: 0.1rem 0.25rem;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.2s;
+      font-weight: 500;
+      border: 1px solid transparent;
+    }
+
+    .interactive-word:hover {
+      filter: brightness(1.2);
+      border-color: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+
+    .word-fraud {
+      background-color: rgba(239, 68, 68, 0.25);
+      border-bottom: 2px solid var(--danger);
+      color: #ffa3a3;
+    }
+
+    .word-legit {
+      background-color: rgba(16, 185, 129, 0.25);
+      border-bottom: 2px solid var(--success);
+      color: #a3ffd6;
+    }
+
+    .word-toggled {
+      background-color: transparent !important;
+      border-bottom: 1px dashed var(--text-muted) !important;
+      color: var(--text-muted) !important;
+      opacity: 0.6;
+    }
+
+    .lime-metrics-card {
+      background-color: rgba(30, 41, 59, 0.8);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .gauge-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin-top: 1rem;
+    }
+
+    .gauge-lbl {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+    }
+
+    .gauge-val {
+      font-size: 2.25rem;
+      font-weight: 800;
+      margin: 0.25rem 0;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .bar-outer {
+      width: 100%;
+      height: 12px;
+      background-color: var(--bg-slate);
+      border-radius: 6px;
+      overflow: hidden;
+      margin-top: 0.5rem;
+      border: 1px solid var(--card-border);
+    }
+
+    .bar-inner {
+      height: 100%;
+      width: 87.5%;
+      background: linear-gradient(90deg, var(--warning), var(--danger));
+      transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s;
+    }
+
+    .lime-details-list {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      flex-grow: 1;
+      justify-content: center;
+    }
+
+    .lime-details-item {
+      display: flex;
+      justify-content: space-between;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      padding-bottom: 0.25rem;
+    }
+
+    /* =============================================================
+       INTERACTIVE CHART (Slide 5 Imbalance Visual)
+       ============================================================= */
+    .imbalance-chart {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .chart-bar-row {
+      display: flex;
+      flex-direction: column;
+      gap: 0.25rem;
+    }
+
+    .chart-label-group {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.85rem;
+    }
+
+    .chart-fill-container {
+      height: 24px;
+      background-color: var(--bg-slate);
+      border-radius: 6px;
+      overflow: hidden;
+      border: 1px solid var(--card-border);
+    }
+
+    .chart-fill {
+      height: 100%;
+      border-radius: 5px;
+      transition: width 1s;
+    }
+
+    .chart-fill-legit {
+      background: linear-gradient(90deg, var(--primary), var(--success));
+      width: 95.16%;
+    }
+
+    .chart-fill-fraud {
+      background: linear-gradient(90deg, var(--warning), var(--danger));
+      width: 4.84%;
+    }
+
+    /* Metrics Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .metric-card {
+      background-color: rgba(30, 41, 59, 0.5);
+      border: 1px solid var(--card-border);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .metric-card-val {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+
+    .metric-card-lbl {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.25rem;
+      text-transform: uppercase;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+<div id="app">
+  <!-- Sidebar Panel -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h2>Fraud Detection</h2>
+      <p>Project Presentation Slides</p>
+    </div>
+    <ul class="slide-list" id="slide-list">
+      <!-- Items dynamically populated -->
+    </ul>
+  </div>
+
+  <!-- Slide View Area -->
+  <div class="slide-viewer">
+    <!-- Toggle Sidebar Button -->
+    <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle Slide Panel">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="3" y1="12" x2="21" y2="12"></line>
+        <line x1="3" y1="6" x2="21" y2="6"></line>
+        <line x1="3" y1="18" x2="21" y2="18"></line>
+      </svg>
+    </button>
+
+    <div class="slides-container" id="slides-container">
+      
+      <!-- SLIDE 1: TITLE SLIDE -->
+      <div class="slide active" data-title="Title Slide">
+        <div class="title-slide-container">
+          <div class="title-glow"></div>
+          <h1 class="title-h1">Explainable Fake Job Advertisement<br>Detection Framework</h1>
+          <p class="title-sub">A Trust-Aware, Auditable Decision Support System for Online Recruitment Fraud</p>
+          <div class="title-meta">
+            <div class="title-meta-item">
+              <strong>MODEL BASELINE</strong>
+              Fraud-BERT (Taneja et al., 2025)
+            </div>
+            <div class="title-meta-item">
+              <strong>TECHNOLOGY STACK</strong>
+              React / FastAPI / Express / MongoDB
+            </div>
+            <div class="title-meta-item">
+              <strong>NOVEL FEATURES</strong>
+              SHAP & LIME XAI, Trust & Severity Engines
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 2: INTRODUCTION -->
+      <div class="slide" data-title="1. Introduction & Motivation">
+        <div class="slide-title-group">
+          <h2 class="slide-title">1. Introduction & Motivation</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body two-col">
+          <ul class="bullet-list">
+            <li>
+              <span class="bullet-title">Explosion of Recruitment Fraud</span>
+              <span class="bullet-desc">Digitized job hunting has led to sophisticated fraudulent job ads seeking quick gains.</span>
+            </li>
+            <li>
+              <span class="bullet-title">Candidate Harm & Abuse</span>
+              <span class="bullet-desc">Consequences range from monetary scams (application/training fees) to identity theft (SSN/details).</span>
+            </li>
+            <li>
+              <span class="bullet-title">The Opaque "Black-Box" ML Problem</span>
+              <span class="bullet-desc">Traditional classifiers yield binary predictions without explanations, offering no auditable evidence.</span>
+            </li>
+          </ul>
+          <div class="card" style="height: 100%; display: flex; flex-direction: column; justify-content: center; background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95)); border-color: rgba(59, 130, 246, 0.25);">
+            <div class="card-title">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--accent);">
+                <polygon points="12 2 2 7 12 12 22 7 12 2"></polygon>
+                <polyline points="2 17 12 22 22 17"></polyline>
+                <polyline points="2 12 12 17 22 12"></polyline>
+              </svg>
+              Core Project Objective
+            </div>
+            <p style="font-size: 1.05rem; color: var(--text-light); line-height: 1.6;">
+              Provide job seekers with transparent explanations and structured warnings rather than simple opaque classification labels, giving them actionable confidence to verify suspicious postings.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 3: COMPARISON TABLE -->
+      <div class="slide" data-title="2. Base Paper vs. Extended Framework">
+        <div class="slide-title-group">
+          <h2 class="slide-title">2. Base Paper vs. Proposed Extended Framework</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body">
+          <table class="slide-table">
+            <thead>
+              <tr>
+                <th>Feature / Dimension</th>
+                <th>Fraud-BERT Baseline (Taneja et al., 2025)</th>
+                <th>Proposed Extended Framework</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Deep Classifier</strong></td>
+                <td>Fine-tuned BERT-base-uncased</td>
+                <td>Fine-tuned BERT-base-uncased + Tuned Decision Boundaries</td>
+              </tr>
+              <tr>
+                <td><strong>Interpretability</strong></td>
+                <td>None (Opaque classification labels)</td>
+                <td><span class="badge badge-info">SHAP</span> (Global) + <span class="badge badge-info">LIME</span> (Local) explanation engines</td>
+              </tr>
+              <tr>
+                <td><strong>Trust Assessment</strong></td>
+                <td>None</td>
+                <td>0–100 deterministic Trust Score checking 8 named heuristic signals</td>
+              </tr>
+              <tr>
+                <td><strong>Risk Tiering</strong></td>
+                <td>None</td>
+                <td>4-tier Risk badging (<span class="badge badge-success">Low</span> to <span class="badge badge-danger">Critical</span>)</td>
+              </tr>
+              <tr>
+                <td><strong>Input Channels</strong></td>
+                <td>Structured text datasets only</td>
+                <td>Supports Text, website URLs, PDF files, and image screenshots (OCR)</td>
+              </tr>
+              <tr>
+                <td><strong>Auditing / Guidance</strong></td>
+                <td>None</td>
+                <td>Warning prompts, severity scoreboards, and actionable checklists</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SLIDE 4: SYSTEM ARCHITECTURE -->
+      <div class="slide" data-title="3. System Architecture Flow">
+        <div class="slide-title-group">
+          <h2 class="slide-title">3. System Architecture</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body two-col" style="grid-template-columns: 1.3fr 0.7fr; align-items: center;">
+          <!-- Animated SVG Flowchart -->
+          <svg class="svg-flowchart" viewBox="0 0 600 350">
+            <!-- Connectors (Paths) -->
+            <path id="path-fe-be" class="flow-link" d="M 120,150 L 260,150" />
+            <path id="path-be-db" class="flow-link" d="M 320,175 L 320,260" />
+            <path id="path-be-ai" class="flow-link" d="M 380,150 L 480,150" />
+            <path id="path-ai-cache" class="flow-link" d="M 540,175 L 540,260" />
+
+            <!-- Animated dots -->
+            <circle class="flow-pulse">
+              <animateMotion dur="2.5s" repeatCount="indefinite" path="M 120,150 L 260,150" />
+            </circle>
+            <circle class="flow-pulse" fill="var(--success)">
+              <animateMotion dur="3s" repeatCount="indefinite" path="M 320,150 L 320,260" />
+            </circle>
+            <circle class="flow-pulse" fill="var(--warning)">
+              <animateMotion dur="2s" repeatCount="indefinite" path="M 380,150 L 480,150" />
+            </circle>
+
+            <!-- Node 1: React FE -->
+            <rect class="flow-node" x="20" y="100" width="100" height="100" rx="8" />
+            <text class="flow-text" x="70" y="145">React SPA</text>
+            <text class="flow-text-sub" x="70" y="165">Vite / TS / Tailwind</text>
+
+            <!-- Node 2: Node.js BE -->
+            <rect class="flow-node" x="260" y="100" width="120" height="100" rx="8" stroke="var(--accent)" />
+            <text class="flow-text" x="320" y="145">Node/Express</text>
+            <text class="flow-text-sub" x="320" y="165">Orchestrator & Auth</text>
+
+            <!-- Node 3: Database MongoDB -->
+            <rect class="flow-node" x="260" y="260" width="120" height="70" rx="8" stroke="var(--success)" />
+            <text class="flow-text" x="320" y="295">MongoDB</text>
+            <text class="flow-text-sub" x="320" y="312">History & User Logs</text>
+
+            <!-- Node 4: FastAPI AI Service -->
+            <rect class="flow-node" x="480" y="100" width="100" height="100" rx="8" stroke="var(--warning)" />
+            <text class="flow-text" x="530" y="140">FastAPI AI</text>
+            <text class="flow-text-sub" x="530" y="158">BERT Classifier</text>
+            <text class="flow-text-sub" x="530" y="172">Heuristics Engine</text>
+
+            <!-- Node 5: Disk Weights/SHAP -->
+            <rect class="flow-node" x="470" y="260" width="120" height="70" rx="8" stroke="var(--warning)" />
+            <text class="flow-text" x="530" y="295">BERT weights</text>
+            <text class="flow-text-sub" x="530" y="312">& SHAP cache (Disk)</text>
+          </svg>
+
+          <div>
+            <h4 style="font-size: 1.1rem; color: var(--accent); margin-bottom: 0.75rem; font-weight: 700;">Architecture Highlights</h4>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+              • <strong>Decoupled Pipelines</strong>: Frontend handles file ingestion and dashboard rendering, Backend handles rate limiting & auth, and FastAPI AI remains isolated for ML workloads.
+            </p>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5;">
+              • <strong>Audit Logs</strong>: Every inference run with classification results, trust scores, and signals is recorded to MongoDB for historical tracking.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 5: DATA INSIGHTS & EDA -->
+      <div class="slide" data-title="4. Dataset & Exploratory Analysis">
+        <div class="slide-title-group">
+          <h2 class="slide-title">4. Dataset & Data Imbalance Insights</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body two-col">
+          <div>
+            <h4 style="font-size: 1.2rem; color: var(--accent); margin-bottom: 0.75rem; font-weight: 700;">EMSCAD Corpus Analysis</h4>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+              • <strong>Data Corpus</strong>: Built using the EMSCAD corpus comprising 17,880 rows containing details on 18 posting attributes.
+            </p>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6; margin-bottom: 1rem;">
+              • <strong>Class Imbalance</strong>: Fraudulent job postings represent only 4.84% (866) of the corpus, vs. 95.16% (17,014) legitimate postings.
+            </p>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.6;">
+              • <strong>Imbalance Management</strong>: During fine-tuning, class weights are assigned in the cross-entropy loss function to ensure the model doesn't bias entirely toward the majority class.
+            </p>
+          </div>
+          <div class="card" style="padding: 1.5rem;">
+            <h5 style="font-size: 1rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-light);">Class Distribution Representation</h5>
+            <div class="imbalance-chart">
+              <div class="chart-bar-row">
+                <div class="chart-label-group">
+                  <span>Legitimate Postings</span>
+                  <strong>17,014 (95.16%)</strong>
+                </div>
+                <div class="chart-fill-container">
+                  <div class="chart-fill chart-fill-legit"></div>
+                </div>
+              </div>
+              <div class="chart-bar-row">
+                <div class="chart-label-group">
+                  <span>Fraudulent Postings</span>
+                  <strong>866 (4.84%)</strong>
+                </div>
+                <div class="chart-fill-container">
+                  <div class="chart-fill chart-fill-fraud"></div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--card-border); font-size: 0.85rem; color: var(--text-muted); line-height: 1.4;">
+              <strong>Heuristic Correlation</strong>: Missing text fields correlate heavily with fraud: 67.78% of fraudulent postings lack a `company_profile` compared to only 15.99% of legitimate ads.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 6: AI CLASSIFICATION PIPELINE -->
+      <div class="slide" data-title="5. Ingestion & Preprocessing Pipeline">
+        <div class="slide-title-group">
+          <h2 class="slide-title">5. AI Classification Pipeline</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body">
+          <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-top: 2rem;">
+            <div class="card" style="padding: 1.5rem; text-align: center;">
+              <div style="background-color: rgba(59, 130, 246, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <strong style="color: var(--accent); font-size: 1.2rem;">01</strong>
+              </div>
+              <h5 style="font-weight: 700; margin-bottom: 0.5rem; font-size: 1rem;">Multi-Input Ingest</h5>
+              <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">Parses scraped URLs, extracts text from PDFs (PyMuPDF), or performs OCR on image screenshots (EasyOCR).</p>
+            </div>
+
+            <div class="card" style="padding: 1.5rem; text-align: center;">
+              <div style="background-color: rgba(59, 130, 246, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <strong style="color: var(--accent); font-size: 1.2rem;">02</strong>
+              </div>
+              <h5 style="font-weight: 700; margin-bottom: 0.5rem; font-size: 1rem;">Clean & Tokenize</h5>
+              <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">Strips emojis/HTML tags, normalizes text representations, and tokenizes strings using BERT's WordPiece tokenizer.</p>
+            </div>
+
+            <div class="card" style="padding: 1.5rem; text-align: center;">
+              <div style="background-color: rgba(59, 130, 246, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <strong style="color: var(--accent); font-size: 1.2rem;">03</strong>
+              </div>
+              <h5 style="font-weight: 700; margin-bottom: 0.5rem; font-size: 1rem;">BERT Inference</h5>
+              <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">Feeds clean token matrices to fine-tuned BERT-base-uncased. A decision threshold of 0.65 yields the binary call.</p>
+            </div>
+
+            <div class="card" style="padding: 1.5rem; text-align: center;">
+              <div style="background-color: rgba(59, 130, 246, 0.1); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1rem auto; border: 1px solid rgba(59, 130, 246, 0.3);">
+                <strong style="color: var(--accent); font-size: 1.2rem;">04</strong>
+              </div>
+              <h5 style="font-weight: 700; margin-bottom: 0.5rem; font-size: 1rem;">Score & Explain</h5>
+              <p style="font-size: 0.8rem; color: var(--text-muted); line-height: 1.5;">Triggers Trust, Severity and Risk categorization calculations. Runs live LIME explainer per instance.</p>
+            </div>
+          </div>
+          <div style="margin-top: 1.5rem; background: rgba(59, 130, 246, 0.05); padding: 1rem; border-radius: 8px; border: 1px solid rgba(59, 130, 246, 0.15); font-size: 0.9rem; line-height: 1.5; color: var(--text-muted);">
+            <strong>Generalization</strong>: The model is not just lookup based. Standard integration tests include verifying unseen sample postings (e.g. KMIT faculty listings), which pass successfully based solely on learned textual patterns.
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 7: EXPLAINABLE AI ENGINE (INTERACTIVE SIMULATOR) -->
+      <div class="slide" data-title="6. Interactive Explainability Engine">
+        <div class="slide-title-group">
+          <h2 class="slide-title">6. Interactive Explainable AI (XAI) Engine</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body lime-container">
+          <!-- Text Sample Panel -->
+          <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+            <p style="font-size: 0.9rem; color: var(--text-muted); font-weight: 500;">
+              Hover/Click words to toggle their presence and see the LIME classifier probability adjust:
+            </p>
+            <div class="posting-box" id="posting-box">
+              <!-- Inline word items -->
+              <span class="interactive-word word-legit" data-impact="-0.05">Looking</span>
+              <span class="interactive-word" data-impact="0.0">for</span>
+              <span class="interactive-word word-legit" data-impact="-0.04">part-time</span>
+              <span class="interactive-word" data-impact="0.0">administrative</span>
+              <span class="interactive-word word-legit" data-impact="-0.03">assistants</span>
+              <span class="interactive-word" data-impact="0.0">to</span>
+              <span class="interactive-word word-legit" data-impact="-0.02">join</span>
+              <span class="interactive-word" data-impact="0.0">our</span>
+              <span class="interactive-word word-legit" data-impact="-0.05">verified</span>
+              <span class="interactive-word" data-impact="0.0">team.</span>
+              <br><br>
+              <span class="interactive-word word-fraud" data-impact="0.25" id="w-urg">URGENT:</span>
+              <span class="interactive-word" data-impact="0.0">hiring</span>
+              <span class="interactive-word" data-impact="0.0">now.</span>
+              <span class="interactive-word word-fraud" data-impact="0.30" id="w-fee">Registration fee</span>
+              <span class="interactive-word word-fraud" data-impact="0.20" id="w-pay">must be paid</span>
+              <span class="interactive-word" data-impact="0.0">prior</span>
+              <span class="interactive-word" data-impact="0.0">to</span>
+              <span class="interactive-word" data-impact="0.0">joining.</span>
+              <span class="interactive-word" data-impact="0.0">Send</span>
+              <span class="interactive-word" data-impact="0.0">details</span>
+              <span class="interactive-word" data-impact="0.0">to</span>
+              <span class="interactive-word word-fraud" data-impact="0.22" id="w-tel">Telegram recruitment.</span>
+            </div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); display: flex; gap: 1rem;">
+              <span><span style="display:inline-block; width:10px; height:10px; background-color:rgba(16, 185, 129, 0.3); border-radius:2px;"></span> Green: Legit signal</span>
+              <span><span style="display:inline-block; width:10px; height:10px; background-color:rgba(239, 68, 68, 0.3); border-radius:2px;"></span> Red: Fraud signal</span>
+              <span><span style="display:inline-block; width:10px; height:10px; border: 1px dashed var(--text-muted); border-radius:2px;"></span> Dashed: Toggled off (LIME perturbation)</span>
+            </div>
+          </div>
+
+          <!-- LIME Metrics Dashboard -->
+          <div class="lime-metrics-card">
+            <div>
+              <h5 style="font-weight: 700; font-size: 1rem; color: var(--accent); margin-bottom: 0.5rem;">LIME Live Prediction</h5>
+              <div class="gauge-container">
+                <div class="gauge-lbl" id="pred-label">Fraud Classification</div>
+                <div class="gauge-val" id="pred-val">87.5%</div>
+                <div class="bar-outer">
+                  <div class="bar-inner" id="gauge-bar"></div>
+                </div>
+              </div>
+            </div>
+            <div class="lime-details-list" id="lime-details">
+              <div class="lime-details-item">
+                <span style="color: var(--danger); font-weight: 600;">• Registration fee</span>
+                <span>+30.0%</span>
+              </div>
+              <div class="lime-details-item">
+                <span style="color: var(--danger); font-weight: 600;">• URGENT flag</span>
+                <span>+25.0%</span>
+              </div>
+              <div class="lime-details-item">
+                <span style="color: var(--danger); font-weight: 600;">• Telegram contact</span>
+                <span>+22.0%</span>
+              </div>
+              <div class="lime-details-item">
+                <span style="color: var(--success); font-weight: 600;">• Verified flag</span>
+                <span>-5.0%</span>
+              </div>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-muted); text-align: center; border-top: 1px solid var(--card-border); padding-top: 0.5rem;">
+              <strong>SHAP Global Cache</strong> is loaded instantly on application startup for population feature insights.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 8: DETERMINISTIC TRUST SCORE ENGINE -->
+      <div class="slide" data-title="7. Deterministic Trust Score">
+        <div class="slide-title-group">
+          <h2 class="slide-title">7. Deterministic Trust Score Engine</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body two-col">
+          <ul class="bullet-list">
+            <li>
+              <span class="bullet-title">Objective Scorecard (0–100)</span>
+              <span class="bullet-desc">Ensures complete clarity and accountability. No second black-box model is stacked on top of BERT.</span>
+            </li>
+            <li>
+              <span class="bullet-title">8 Defined Penalty Heuristics</span>
+              <span class="bullet-desc">Triggers penalty deductions for domain mismatches, missing company logo, registration fee, layout mismatches, etc.</span>
+            </li>
+            <li>
+              <span class="bullet-title">Input Layout Fallbacks</span>
+              <span class="bullet-desc">Correctly handles unstructured text channels (PDF/OCR text) without incorrectly penalizing missing field structures.</span>
+            </li>
+          </ul>
+
+          <div class="card" style="padding: 1.5rem;">
+            <h5 style="font-size: 1.1rem; font-weight: 700; color: var(--accent); margin-bottom: 1rem;">Trust Categorization Bands</h5>
+            <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+                <span class="badge badge-success">High Trust</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-weight: bold;">90 - 100</span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+                <span class="badge badge-info">Moderate Trust</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-weight: bold;">70 - 89</span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 0.5rem;">
+                <span class="badge badge-warning">Low Trust</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-weight: bold;">50 - 69</span>
+              </div>
+              <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 0.25rem;">
+                <span class="badge badge-danger">Unreliable</span>
+                <span style="font-family: 'JetBrains Mono', monospace; font-weight: bold;">Below 50</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 9: RISK & SEVERITY ENGINES -->
+      <div class="slide" data-title="8. Risk & Severity Assessment">
+        <div class="slide-title-group">
+          <h2 class="slide-title">8. Risk & Severity Engines</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body two-col">
+          <div class="card" style="height: 100%;">
+            <div class="card-title" style="color: var(--danger);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="8" x2="12" y2="12"></line>
+                <line x1="12" y1="16" x2="12.01" y2="16"></line>
+              </svg>
+              Fraud Severity Score (0–100)
+            </div>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+              Assesses the high-harm level of a suspicious job posting based on immediate danger signs:
+            </p>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: var(--danger); font-weight: bold;">•</span> Asking for upfront registration fees.
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: var(--danger); font-weight: bold;">•</span> Financial validation (e.g. requesting bank account details).
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: var(--danger); font-weight: bold;">•</span> Insecure contact handles (WhatsApp, Telegram recruitment channels).
+              </li>
+            </ul>
+          </div>
+
+          <div class="card" style="height: 100%;">
+            <div class="card-title" style="color: var(--accent);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="9" y1="3" x2="9" y2="21"></line>
+                <line x1="15" y1="3" x2="15" y2="21"></line>
+                <line x1="3" y1="9" x2="21" y2="9"></line>
+                <line x1="3" y1="15" x2="21" y2="15"></line>
+              </svg>
+              Risk Categorization Matrix
+            </div>
+            <p style="font-size: 0.95rem; color: var(--text-muted); line-height: 1.5; margin-bottom: 1rem;">
+              Combines fine-tuned BERT probability and heuristic Trust Scores:
+            </p>
+            <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.5rem; font-size: 0.9rem;">
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: var(--accent); font-weight: bold;">•</span> Maps probability-trust coordinates to 4 discrete categories.
+              </li>
+              <li style="display: flex; align-items: center; gap: 0.5rem;">
+                <span style="color: var(--accent); font-weight: bold;">•</span> Escalate safeguards: Low BERT probability is overridden if critical trust anomalies occur, escalating risk categories to <span class="badge badge-warning">Medium</span>.
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 10: MODEL PERFORMANCE -->
+      <div class="slide" data-title="9. Performance Metrics">
+        <div class="slide-title-group">
+          <h2 class="slide-title">9. Model Results & Performance</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-card-val">98.73%</div>
+              <div class="metric-card-lbl">Accuracy</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-val">90.68%</div>
+              <div class="metric-card-lbl">Precision</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-val">82.31%</div>
+              <div class="metric-card-lbl">Recall</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-val">0.863</div>
+              <div class="metric-card-lbl">F1-Score</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-card-val">0.983</div>
+              <div class="metric-card-lbl">ROC-AUC</div>
+            </div>
+          </div>
+
+          <div class="two-col" style="margin-top: 1.5rem; align-items: center;">
+            <table class="slide-table" style="font-size: 0.85rem;">
+              <thead>
+                <tr>
+                  <th>Confusion Matrix</th>
+                  <th>Pred Legitimate</th>
+                  <th>Pred Fraudulent</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><strong>Actual Legitimate</strong></td>
+                  <td style="color: var(--success); font-weight: bold;">2,541 (TN)</td>
+                  <td style="color: var(--danger);">11 (FP)</td>
+                </tr>
+                <tr>
+                  <td><strong>Actual Fraudulent</strong></td>
+                  <td style="color: var(--danger);">23 (FN)</td>
+                  <td style="color: var(--success); font-weight: bold;">107 (TP)</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="card" style="padding: 1.25rem; font-size: 0.9rem; line-height: 1.5; color: var(--text-muted);">
+              <strong>Performance Verification</strong>: Evaluated on 2,682 completely unseen held-out validation instances. Precision is highly optimized (90.68%) to reduce false alarms. Recall improvements represent future directions via focal loss adjustments.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 11: ACHIEVEMENTS & FUTURE SCOPE -->
+      <div class="slide" data-title="10. Contributions & Future Scope">
+        <div class="slide-title-group">
+          <h2 class="slide-title">10. Key Achievements & Future Directions</h2>
+          <div class="slide-divider"></div>
+        </div>
+        <div class="slide-body two-col">
+          <div>
+            <h4 style="font-size: 1.15rem; color: var(--accent); margin-bottom: 0.75rem; font-weight: 700;">Research Contributions</h4>
+            <ul class="bullet-list" style="gap: 0.75rem; font-size: 0.95rem;">
+              <li>Unifies Deep BERT models with interactive dual-XAI explanation scorecards.</li>
+              <li>Implements independent rule-based Trust & Severity validators to verify output context.</li>
+              <li>Accommodates multi-input scanning paths (Text, PDFs, image-OCR).</li>
+            </ul>
+          </div>
+          <div>
+            <h4 style="font-size: 1.15rem; color: var(--accent); margin-bottom: 0.75rem; font-weight: 700;">Future Roadmap</h4>
+            <ul class="bullet-list" style="gap: 0.75rem; font-size: 0.95rem;">
+              <li><strong>Browser Extension</strong>: Scans LinkedIn and job boards directly in real-time.</li>
+              <li><strong>Multilingual Scans</strong>: Fine-tunes classifiers for Spanish, German, French.</li>
+              <li><strong>API Moderation</strong>: Plug-and-play validation APIs directly for online platforms.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- SLIDE 12: CONCLUSION & Q&A -->
+      <div class="slide" data-title="Conclusion & Questions">
+        <div class="title-slide-container" style="text-align: center; align-items: center;">
+          <div class="title-glow" style="left: 50%; transform: translate(-50%, -50%);"></div>
+          <h1 class="title-h1" style="font-size: 3.5rem; margin-bottom: 1.5rem;">Conclusion & Thank You</h1>
+          <p style="font-size: 1.25rem; color: var(--accent); margin-bottom: 2rem; max-width: 600px;">
+            A major step forward in recruitment security, bringing transparency to fake job classification.
+          </p>
+          <div class="card" style="text-align: left; max-width: 600px; padding: 1.5rem; border-color: rgba(59, 130, 246, 0.2);">
+            <div style="font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; color: var(--text-muted); line-height: 1.6;">
+              <span style="color: var(--primary);"># Repositories & Guides</span><br>
+              • ai_service/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -> FastAPI model core<br>
+              • backend/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -> express middleware<br>
+              • frontend/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -> react framework dashboard<br>
+              • docs/ARCHITECTURE.md -> architecture schema details
+            </div>
+          </div>
+          <p style="margin-top: 2rem; font-size: 1rem; color: var(--text-muted);">
+            Open for Questions and Discussion
+          </p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Slide Navigation controls overlay -->
+    <div class="controls-panel">
+      <button class="control-btn" id="prev-btn" title="Previous Slide (Left Arrow / Backspace)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="12" x2="5" y2="12"></line>
+          <polyline points="12 19 5 12 12 5"></polyline>
+        </svg>
+      </button>
+      <div class="counter" id="slide-counter">1 / 12</div>
+      <button class="control-btn" id="next-btn" title="Next Slide (Right Arrow / Space)">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </button>
+      <button class="control-btn" id="fs-btn" title="Toggle Fullscreen">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Bottom progress bar -->
+  <div class="progress-bar-container">
+    <div class="progress-bar" id="progress-bar"></div>
+  </div>
+</div>
+
+<script>
+  // -----------------------------------------------------------
+  // SLIDESHOW CONTROLLER LOGIC
+  // -----------------------------------------------------------
+  const slides = document.querySelectorAll('.slide');
+  const slideList = document.getElementById('slide-list');
+  const counter = document.getElementById('slide-counter');
+  const progressBar = document.getElementById('progress-bar');
+  const prevBtn = document.getElementById('prev-btn');
+  const nextBtn = document.getElementById('next-btn');
+  const sidebar = document.getElementById('sidebar');
+  const sidebarToggle = document.getElementById('sidebar-toggle');
+  const fsBtn = document.getElementById('fs-btn');
+
+  let currentIdx = 0;
+
+  // Populate sidebar menu item dynamically
+  slides.forEach((slide, idx) => {
+    const title = slide.getAttribute('data-title') || `Slide ${idx + 1}`;
+    const li = document.createElement('li');
+    li.className = `slide-item ${idx === 0 ? 'active' : ''}`;
+    li.textContent = title;
+    li.addEventListener('click', () => jumpToSlide(idx));
+    slideList.appendChild(li);
+  });
+
+  const slideItems = document.querySelectorAll('.slide-item');
+
+  function updateControls() {
+    // Enable/disable navigation buttons
+    prevBtn.disabled = currentIdx === 0;
+    nextBtn.disabled = currentIdx === slides.length - 1;
+    
+    // Update counter
+    counter.textContent = `${currentIdx + 1} / ${slides.length}`;
+    
+    // Update progress bar width
+    const percentage = ((currentIdx) / (slides.length - 1)) * 100;
+    progressBar.style.width = `${percentage}%`;
+
+    // Update active slide class list
+    slides.forEach((slide, idx) => {
+      slide.classList.toggle('active', idx === currentIdx);
+    });
+
+    // Update active list items in panel sidebar
+    slideItems.forEach((item, idx) => {
+      item.classList.toggle('active', idx === currentIdx);
+    });
+  }
+
+  function jumpToSlide(idx) {
+    if (idx >= 0 && idx < slides.length) {
+      currentIdx = idx;
+      updateControls();
+    }
+  }
+
+  function nextSlide() {
+    if (currentIdx < slides.length - 1) {
+      currentIdx++;
+      updateControls();
+    }
+  }
+
+  function prevSlide() {
+    if (currentIdx > 0) {
+      currentIdx--;
+      updateControls();
+    }
+  }
+
+  // Keyboard Navigation Events
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowRight' || e.key === ' ' || e.key === 'PageDown') {
+      e.preventDefault();
+      nextSlide();
+    } else if (e.key === 'ArrowLeft' || e.key === 'Backspace' || e.key === 'PageUp') {
+      e.preventDefault();
+      prevSlide();
+    }
+  });
+
+  prevBtn.addEventListener('click', prevSlide);
+  nextBtn.addEventListener('click', nextSlide);
+
+  // Toggle Sidebar Click Panel
+  sidebarToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('collapsed');
+  });
+
+  // Fullscreen toggle event
+  fsBtn.addEventListener('click', () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error enabling fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen();
+    }
+  });
+
+  // Init control layout updates
+  updateControls();
+
+
+  // -----------------------------------------------------------
+  // INTERACTIVE LIME SIMULATOR (SLIDE 7)
+  // -----------------------------------------------------------
+  const interactiveWords = document.querySelectorAll('.interactive-word');
+  const predValEl = document.getElementById('pred-val');
+  const predLabelEl = document.getElementById('pred-label');
+  const gaugeBarEl = document.getElementById('gauge-bar');
+  const detailsEl = document.getElementById('lime-details');
+
+  // Keep track of which indices are disabled
+  let disabledWords = new Set();
+
+  // Words data details mapping
+  const wordDetails = {
+    'w-urg': { label: 'URGENT flag', baseVal: 0.25 },
+    'w-fee': { label: 'Registration fee', baseVal: 0.30 },
+    'w-pay': { label: 'Payment requirement', baseVal: 0.20 },
+    'w-tel': { label: 'Telegram contact', baseVal: 0.22 }
+  };
+
+  interactiveWords.forEach(word => {
+    word.addEventListener('click', () => {
+      const id = word.id;
+      if (!id) return; // Only trigger simulation on key penalty words
+
+      if (disabledWords.has(id)) {
+        disabledWords.delete(id);
+        word.classList.remove('word-toggled');
+      } else {
+        disabledWords.add(id);
+        word.classList.add('word-toggled');
+      }
+      recalculateLime();
+    });
+  });
+
+  function recalculateLime() {
+    // Base probability when all signals are on
+    let baseProb = 0.875;
+    
+    // Deduct probability based on disabled items
+    if (disabledWords.has('w-fee')) baseProb -= 0.35;
+    if (disabledWords.has('w-urg')) baseProb -= 0.22;
+    if (disabledWords.has('w-tel')) baseProb -= 0.18;
+    if (disabledWords.has('w-pay')) baseProb -= 0.20;
+
+    // Boundary constraints
+    if (baseProb < 0.05) baseProb = 0.05;
+    if (baseProb > 0.98) baseProb = 0.98;
+
+    const finalPercentage = (baseProb * 100).toFixed(1);
+    predValEl.textContent = `${finalPercentage}%`;
+    gaugeBarEl.style.width = `${finalPercentage}%`;
+
+    // Color code prediction bar
+    if (baseProb >= 0.65) {
+      predLabelEl.textContent = 'High Fraud Probability';
+      predLabelEl.style.color = 'var(--danger)';
+      gaugeBarEl.style.background = 'linear-gradient(90deg, var(--warning), var(--danger))';
+    } else if (baseProb >= 0.40) {
+      predLabelEl.textContent = 'Moderate Fraud Risk';
+      predLabelEl.style.color = 'var(--warning)';
+      gaugeBarEl.style.background = 'linear-gradient(90deg, var(--primary), var(--warning))';
+    } else {
+      predLabelEl.textContent = 'Legitimate Post';
+      predLabelEl.style.color = 'var(--success)';
+      gaugeBarEl.style.background = 'linear-gradient(90deg, var(--primary), var(--success))';
+    }
+
+    // Refresh explanations
+    detailsEl.innerHTML = '';
+    
+    // Rebuild active list items
+    if (!disabledWords.has('w-fee')) {
+      addDetailItem('• Registration fee', '+30.0%', 'var(--danger)');
+    }
+    if (!disabledWords.has('w-urg')) {
+      addDetailItem('• URGENT flag', '+25.0%', 'var(--danger)');
+    }
+    if (!disabledWords.has('w-tel')) {
+      addDetailItem('• Telegram contact', '+22.0%', 'var(--danger)');
+    }
+    
+    addDetailItem('• Verified flag', '-5.0%', 'var(--success)');
+  }
+
+  function addDetailItem(label, val, color) {
+    const div = document.createElement('div');
+    div.className = 'lime-details-item';
+    div.innerHTML = `<span style="color: ${color}; font-weight: 600;">${label}</span><span>${val}</span>`;
+    detailsEl.appendChild(div);
+  }
+</script>
+</body>
+</html>

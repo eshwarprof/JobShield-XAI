@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui/Alert';
 import { login } from '@/api/auth';
 import { getApiErrorMessage } from '@/api/client';
 import { useAuthStore } from '@/store/authStore';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 export function LoginPage() {
   const [email, setEmail] = useState('');
@@ -52,15 +53,25 @@ export function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             required
           />
-          <Input
-            label="Password"
-            type="password"
-            name="password"
-            icon={<Lock className="h-4 w-4" aria-hidden="true" />}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div>
+            <Input
+              label="Password"
+              type="password"
+              name="password"
+              icon={<Lock className="h-4 w-4" aria-hidden="true" />}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+            <div className="mt-1.5 flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+              >
+                Forgot password?
+              </Link>
+            </div>
+          </div>
           {error && <Alert variant="error">{error}</Alert>}
           <Button type="submit" isLoading={isSubmitting} className="w-full">
             Log in
@@ -73,11 +84,12 @@ export function LoginPage() {
           Sign up
         </Link>
       </p>
-      <p className="mt-2 text-center text-sm text-slate-500 dark:text-slate-400">
-        <Link to="/analyze" className="text-brand-600 hover:text-brand-700 dark:text-brand-400">
-          Continue without an account
-        </Link>
-      </p>
+      <div className="my-4 flex items-center justify-between">
+        <span className="w-1/5 border-b border-slate-200 dark:border-slate-800 lg:w-1/4"></span>
+        <span className="text-xs text-center text-slate-500 dark:text-slate-400 uppercase">or</span>
+        <span className="w-1/5 border-b border-slate-200 dark:border-slate-800 lg:w-1/4"></span>
+      </div>
+      <GoogleSignInButton />
     </div>
   );
 }

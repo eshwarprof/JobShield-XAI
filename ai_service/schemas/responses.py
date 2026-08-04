@@ -9,6 +9,15 @@ class DecisionSupport(BaseModel):
     verificationSuggestions: list[str]
 
 
+class CompanyVerification(BaseModel):
+    searched: bool
+    companyName: str | None = None
+    officialWebsite: str | None = None
+    linkedinPage: str | None = None
+    summary: str | None = None
+    error: str | None = None
+
+
 class AnalysisResponse(BaseModel):
     extractedText: str
     fraudProbability: float
@@ -21,6 +30,7 @@ class AnalysisResponse(BaseModel):
     shapExplanation: dict[str, Any]
     limeExplanation: dict[str, Any]
     decision: DecisionSupport
+    companyVerification: CompanyVerification | None = None
 
 
 class ErrorResponse(BaseModel):

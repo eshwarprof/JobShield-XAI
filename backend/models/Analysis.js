@@ -25,6 +25,7 @@ const analysisSchema = new mongoose.Schema(
 
     shapExplanation: { type: mongoose.Schema.Types.Mixed, default: null },
     limeExplanation: { type: mongoose.Schema.Types.Mixed, default: null },
+    companyVerification: { type: mongoose.Schema.Types.Mixed, default: null },
 
     recommendations: { type: [String], default: [] },
     warnings: { type: [String], default: [] },

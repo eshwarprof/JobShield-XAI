@@ -32,6 +32,15 @@ export interface LimeExplanation {
   features: ExplanationFeature[];
 }
 
+export interface CompanyVerification {
+  searched: boolean;
+  companyName: string | null;
+  officialWebsite: string | null;
+  linkedinPage: string | null;
+  summary: string | null;
+  error: string | null;
+}
+
 export interface Analysis {
   _id: string;
   userId: string | null;
@@ -49,6 +58,7 @@ export interface Analysis {
   limeExplanation: LimeExplanation;
   recommendations: string[];
   warnings: string[];
+  companyVerification?: CompanyVerification | null;
   createdAt: string;
 }
 

@@ -29,6 +29,7 @@ async function persistAnalysis({ userId, inputType, sourceReference, aiResult })
     severityFlags: aiResult.severityFlags,
     shapExplanation: aiResult.shapExplanation,
     limeExplanation: aiResult.limeExplanation,
+    companyVerification: aiResult.companyVerification,
     recommendations,
     warnings: aiResult.decision.warnings,
   });

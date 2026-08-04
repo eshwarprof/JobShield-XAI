@@ -17,6 +17,8 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["user", "admin"], default: "user" },
     tokenVersion: { type: Number, default: 0 },
+    resetOtp: { type: String, default: null },
+    resetOtpExpires: { type: Date, default: null },
   },
   { timestamps: { createdAt: "createdAt", updatedAt: "updatedAt" } }
 );

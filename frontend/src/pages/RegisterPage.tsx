@@ -8,6 +8,7 @@ import { Alert } from '@/components/ui/Alert';
 import { register } from '@/api/auth';
 import { getApiErrorMessage } from '@/api/client';
 import { useAuthStore } from '@/store/authStore';
+import { GoogleSignInButton } from '@/components/auth/GoogleSignInButton';
 
 export function RegisterPage() {
   const [name, setName] = useState('');
@@ -83,6 +84,12 @@ export function RegisterPage() {
           Log in
         </Link>
       </p>
+      <div className="my-4 flex items-center justify-between">
+        <span className="w-1/5 border-b border-slate-200 dark:border-slate-800 lg:w-1/4"></span>
+        <span className="text-xs text-center text-slate-500 dark:text-slate-400 uppercase">or</span>
+        <span className="w-1/5 border-b border-slate-200 dark:border-slate-800 lg:w-1/4"></span>
+      </div>
+      <GoogleSignInButton />
     </div>
   );
 }

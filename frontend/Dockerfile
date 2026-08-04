@@ -1,5 +1,7 @@
 # --- Build stage ---
 FROM node:22-alpine AS build
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 WORKDIR /app
 COPY frontend/package.json frontend/package-lock.json ./
 # npm install, not npm ci: the lockfile was generated on Windows and its

@@ -27,6 +27,13 @@ async def lifespan(_app: FastAPI):
     missing model (fresh checkout, before training has run) is logged, not
     fatal — /health still responds, only /analyze/* endpoints will 503."""
     try:
+        import torch
+        torch.set_num_threads(1)
+        logger.info("Set PyTorch CPU threads to 1 to optimize CPU inference.")
+    except Exception as exc:
+        logger.warning(f"Could not set PyTorch CPU thread count: {exc}")
+
+    try:
         get_model()
         logger.info("Model loaded successfully at startup.")
     except ModelNotTrainedError as exc:

@@ -123,4 +123,89 @@ router.post("/logout-all", requireAuth, authController.logoutAll);
  */
 router.get("/me", requireAuth, authController.me);
 
+/**
+ * @openapi
+ * /auth/google:
+ *   post:
+ *     summary: Authenticate with a Google account
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               credential: { type: string, description: Google ID token JWT }
+ *               mockProfile:
+ *                 type: object
+ *                 properties:
+ *                   email: { type: string }
+ *                   name: { type: string }
+ *     responses:
+ *       200: { description: Successful authentication. }
+ *       400: { description: Invalid parameters. }
+ */
+router.post("/google", authLimiter, authController.googleLogin);
+
+/**
+ * @openapi
+ * /auth/forgot-password:
+ *   post:
+ *     summary: Request a password reset OTP
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email: { type: string, format: email }
+ *     responses:
+ *       200: { description: OTP sent successfully or generic success. }
+ *       400: { description: Validation error. }
+ */
+router.post(
+  "/forgot-password",
+  authLimiter,
+  [body("email").trim().isEmail().withMessage("A valid email is required.").normalizeEmail()],
+  validate,
+  authController.forgotPassword
+);
+
+/**
+ * @openapi
+ * /auth/reset-password:
+ *   post:
+ *     summary: Verify OTP and reset password
+ *     tags: [Auth]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, otp, password]
+ *             properties:
+ *               email: { type: string, format: email }
+ *               otp: { type: string }
+ *               password: { type: string, minLength: 8 }
+ *     responses:
+ *       200: { description: Password updated successfully. }
+ *       400: { description: Invalid or expired OTP. }
+ */
+router.post(
+  "/reset-password",
+  authLimiter,
+  [
+    body("email").trim().isEmail().withMessage("A valid email is required.").normalizeEmail(),
+    body("otp").trim().notEmpty().withMessage("OTP is required."),
+    body("password").isLength({ min: 8 }).withMessage("Password must be at least 8 characters long."),
+  ],
+  validate,
+  authController.resetPassword
+);
+
 module.exports = router;

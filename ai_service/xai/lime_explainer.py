@@ -18,9 +18,11 @@ DEFAULT_NUM_FEATURES = 10
 # configured there, consistent with NFR-1's CPU-serving support) and
 # watching it time out twice even after ruling out the one-time tokenizer
 # download as the cause. 150 is LIME's own commonly-cited "fast" setting for
-# text and keeps a single analysis within a realistic request/response cycle
-# without dropping local explanations altogether.
-DEFAULT_NUM_SAMPLES = 150
+# text, but can still time out on slower CPUs. We lower it to 50 to ensure
+# CPU-only inference finishes well within the backend's timeout limit.
+DEFAULT_NUM_SAMPLES = 20
+
+
 
 
 def generate_local_explanation(
@@ -29,6 +31,11 @@ def generate_local_explanation(
     """FR-8.2/8.3/8.4: word-level contributions for this specific prediction,
     as ranked (word, weight) pairs — already human-readable words, not token
     ids, satisfying FR-8.4 without extra mapping."""
+    # Truncate text to first 400 words to match BERT sequence length limits and prevent LIME performance bottlenecks on long texts.
+    words = text.split()
+    if len(words) > 400:
+        text = " ".join(words[:400])
+
     explainer = LimeTextExplainer(class_names=CLASS_NAMES)
 
     explanation = explainer.explain_instance(

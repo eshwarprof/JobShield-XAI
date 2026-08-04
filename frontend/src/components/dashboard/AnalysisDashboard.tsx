@@ -6,6 +6,7 @@ import { TrustMeter } from '@/components/dashboard/TrustMeter';
 import { SeverityMeter } from '@/components/dashboard/SeverityMeter';
 import { RecommendationCard } from '@/components/dashboard/RecommendationCard';
 import { ExplainabilityPanels } from '@/components/dashboard/ExplainabilityPanels';
+import { AutomatedAuditCard } from '@/components/dashboard/AutomatedAuditCard';
 
 /** SRS Module 8 — the Explainability Dashboard (FR-9.1-9.7, IR-2). Every
  * output converges here regardless of which input channel produced it. */
@@ -15,7 +16,7 @@ export function AnalysisDashboard({ analysis }: { analysis: Analysis }) {
 
   return (
     <div className="animate-fade-in-up space-y-6">
-      <Card>
+      <Card className="card-3d-hover">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <div
@@ -43,10 +44,10 @@ export function AnalysisDashboard({ analysis }: { analysis: Analysis }) {
       </Card>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <Card>
+        <Card className="card-3d-hover">
           <TrustMeter score={analysis.trustScore} band={analysis.trustBand} />
         </Card>
-        <Card>
+        <Card className="card-3d-hover">
           <SeverityMeter score={analysis.severityScore} flags={analysis.severityFlags} />
         </Card>
       </div>
@@ -57,12 +58,22 @@ export function AnalysisDashboard({ analysis }: { analysis: Analysis }) {
         warnings={analysis.warnings}
       />
 
-      <Card>
+      <AutomatedAuditCard
+        flags={analysis.severityFlags}
+        extractedText={analysis.extractedText}
+        companyVerification={analysis.companyVerification}
+      />
+
+      <Card className="card-3d-hover">
         <CardHeader>
           <CardTitle>Explainability</CardTitle>
         </CardHeader>
         <CardContent>
-          <ExplainabilityPanels shap={analysis.shapExplanation} lime={analysis.limeExplanation} />
+          <ExplainabilityPanels
+            shap={analysis.shapExplanation}
+            lime={analysis.limeExplanation}
+            predictionLabel={analysis.predictionLabel}
+          />
         </CardContent>
       </Card>
     </div>

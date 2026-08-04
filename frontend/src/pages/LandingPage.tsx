@@ -62,6 +62,76 @@ export function LandingPage() {
         </motion.div>
       </motion.section>
 
+      {/* 3D Dashboard Mockup Showcase */}
+      <motion.div
+        variants={heroItem}
+        initial="hidden"
+        animate="show"
+        className="relative mx-auto max-w-4xl perspective-1000 transform-style-3d my-12 hidden md:block"
+      >
+        {/* Ambient background glows */}
+        <div className="absolute -inset-6 rounded-3xl bg-gradient-to-tr from-brand-400 to-indigo-500 opacity-20 blur-3xl animate-pulse-glow" />
+
+        <div className="relative rounded-2xl border border-slate-200/80 bg-white/70 backdrop-blur-md shadow-2xl p-6 transform rotate-x-6 rotate-y--4 translate-z-10 animate-float dark:border-slate-800/80 dark:bg-slate-950/60">
+          {/* Mock Header */}
+          <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4 dark:border-slate-900">
+            <div className="flex items-center gap-2">
+              <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-amber-500" />
+              <span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />
+              <span className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 ml-2">JobShield-XAI Security Audit Portal</span>
+            </div>
+            <span className="px-2 py-0.5 rounded bg-rose-50 text-[9px] font-bold text-rose-600 border border-rose-100 dark:bg-rose-950/20 dark:text-rose-400 dark:border-rose-900/30 uppercase tracking-wider">
+              Sample Audit Dashboard
+            </span>
+          </div>
+
+          {/* Grid Layout of Mock Stats */}
+          <div className="grid grid-cols-3 gap-4 mb-4">
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-soft dark:border-slate-900 dark:bg-slate-950">
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">BERT Probability</span>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-rose-600 dark:text-rose-400">92.4%</span>
+                <span className="text-[10px] font-bold text-rose-500">High Risk</span>
+              </div>
+              <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 dark:bg-slate-800">
+                <div className="bg-rose-500 h-1.5 rounded-full" style={{ width: '92.4%' }} />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-soft dark:border-slate-900 dark:bg-slate-950">
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Trust Score</span>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-2xl font-black text-red-600 dark:text-red-400">12%</span>
+                <span className="text-[10px] font-semibold text-slate-500">Critical</span>
+              </div>
+              <div className="mt-3 w-full bg-slate-100 rounded-full h-1.5 dark:bg-slate-800">
+                <div className="bg-red-500 h-1.5 rounded-full" style={{ width: '12%' }} />
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-slate-100 bg-white p-4 shadow-soft dark:border-slate-900 dark:bg-slate-950">
+              <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Risk Category</span>
+              <div className="mt-2 flex items-baseline gap-2">
+                <span className="text-base font-black text-red-600 dark:text-red-400">CRITICAL RISK</span>
+              </div>
+              <span className="mt-3.5 block text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase">Composite Engine Verified</span>
+            </div>
+          </div>
+
+          {/* Explanation panel mockup */}
+          <div className="rounded-xl border border-slate-150 bg-slate-50/50 p-4 dark:border-slate-900 dark:bg-slate-900/30 text-left">
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-4 w-4 text-brand-500 animate-pulse" />
+              <span className="text-[10px] font-bold text-slate-900 dark:text-white uppercase tracking-wider">XAI Explanation (LIME local highlights)</span>
+            </div>
+            <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+              This posting was flagged primarily because of <span className="bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded font-medium">WhatsApp-only contact info</span>, the demand for a <span className="bg-red-100 dark:bg-red-950/40 text-red-700 dark:text-red-400 px-1.5 py-0.5 rounded font-medium">registration deposit</span>, and the mismatched corporate domain sender.
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
       <section>
         <h2 className="mb-8 text-center text-sm font-semibold uppercase tracking-wide text-slate-400 dark:text-slate-500">
           From posting to decision, in one pass

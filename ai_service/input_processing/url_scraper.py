@@ -26,7 +26,7 @@ from bs4 import BeautifulSoup
 REQUEST_TIMEOUT_SECONDS = int(os.environ.get("SCRAPER_REQUEST_TIMEOUT_SECONDS", "10"))
 MAX_RESPONSE_BYTES = int(os.environ.get("SCRAPER_MAX_RESPONSE_BYTES", str(5 * 1024 * 1024)))
 MAX_REDIRECTS = 3
-USER_AGENT = "FakeJobDetectionBot/1.0 (+job-advertisement-analysis)"
+USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
 
 
 class UnsafeUrlError(ValueError):

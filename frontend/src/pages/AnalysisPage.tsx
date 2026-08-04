@@ -1,7 +1,7 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { DragEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FileText, Image as ImageIcon, Link2, Type, UploadCloud, X } from 'lucide-react';
+import { FileText, Image as ImageIcon, Link2, Type, UploadCloud, X, Cpu } from 'lucide-react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Textarea';
@@ -16,10 +16,17 @@ import type { Analysis } from '@/types';
 type Mode = 'text' | 'url' | 'pdf' | 'image';
 
 const MODES: { key: Mode; label: string; icon: typeof Type }[] = [
-  { key: 'text', label: 'Text', icon: Type },
-  { key: 'url', label: 'URL', icon: Link2 },
-  { key: 'pdf', label: 'PDF Upload', icon: FileText },
-  { key: 'image', label: 'Image Upload', icon: ImageIcon },
+  { key: 'text', label: 'Text Input', icon: Type },
+  { key: 'url', label: 'URL Scanner', icon: Link2 },
+  { key: 'pdf', label: 'PDF Document', icon: FileText },
+  { key: 'image', label: 'Image/Screenshot', icon: ImageIcon },
+];
+
+const STATUS_MESSAGES = [
+  "Tokenizing text and performing lexical sanitization...",
+  "Running fine-tuned BERT transformer neural network...",
+  "Synthesizing LIME localized word influence features...",
+  "Querying Wikipedia and verifying sender authority..."
 ];
 
 function FileDropzone({
@@ -103,7 +110,19 @@ export function AnalysisPage() {
   const [file, setFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [statusIndex, setStatusIndex] = useState(0);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isSubmitting) {
+      const interval = setInterval(() => {
+        setStatusIndex((prev) => (prev < STATUS_MESSAGES.length - 1 ? prev + 1 : prev));
+      }, 2000);
+      return () => clearInterval(interval);
+    } else {
+      setStatusIndex(0);
+    }
+  }, [isSubmitting]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -121,9 +140,6 @@ export function AnalysisPage() {
         if (!file) throw new Error(`Please choose a ${mode.toUpperCase()} file.`);
         analysis = await submitFile(mode, file);
       }
-      // Each completed analysis gets its own URL (/analyze/:id) rather than
-      // living in local component state — refresh preserves it, browser back
-      // works naturally, and the result can be bookmarked or shared.
       navigate(`/analyze/${analysis._id}`, { state: { fresh: true } });
     } catch (err) {
       setError(err instanceof Error && !('response' in err) ? err.message : getApiErrorMessage(err));
@@ -132,17 +148,51 @@ export function AnalysisPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl animate-fade-in-up">
-      <h1 className="mb-2 text-2xl font-bold text-slate-900 dark:text-white">Analyze a Job Advertisement</h1>
-      <p className="mb-6 text-sm text-slate-500 dark:text-slate-400">
-        Paste text, provide a URL, or upload a PDF/screenshot — every mode goes through the same analysis.
-      </p>
+    <div className="relative mx-auto max-w-2xl animate-fade-in-up space-y-6">
+      {/* Ambient background glows */}
+      <div className="absolute -inset-10 rounded-3xl bg-gradient-to-tr from-brand-400 to-indigo-500 opacity-10 blur-3xl animate-pulse-glow pointer-events-none" />
 
-      <Card>
+      <div className="text-center md:text-left">
+        <h1 className="mb-2 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white sm:text-4xl bg-gradient-to-r from-slate-900 via-slate-800 to-brand-600 bg-clip-text text-transparent dark:from-white dark:via-slate-100 dark:to-brand-400">
+          Analyze a Job Advertisement
+        </h1>
+        <p className="text-sm text-slate-500 dark:text-slate-400">
+          Upload listings via text, URL, PDF, or screenshots to compute composite safety audits and feature predictions.
+        </p>
+      </div>
+
+      <Card className="card-3d-hover relative overflow-hidden border border-slate-200/80 bg-white/70 backdrop-blur-md shadow-2xl p-6 dark:border-slate-800/80 dark:bg-slate-950/60">
+        
+        {/* Holographic scanner visual overlay when submitting */}
+        {isSubmitting && (
+          <div className="absolute inset-0 z-50 bg-slate-950/85 backdrop-blur-md rounded-xl flex flex-col items-center justify-center p-6 text-center animate-fade-in text-white">
+            {/* Pulsing beam selector */}
+            <div className="relative h-24 w-24 mb-6">
+              <div className="absolute inset-0 rounded-full border-4 border-dashed border-brand-500 animate-spin" style={{ animationDuration: '8s' }} />
+              <div className="absolute inset-2 rounded-full border-2 border-brand-400 opacity-60 animate-spin" style={{ animationDuration: '4s', animationDirection: 'reverse' }} />
+              <div className="absolute inset-4 rounded-full bg-brand-500/10 flex items-center justify-center">
+                <Cpu className="h-8 w-8 text-brand-400 animate-pulse" />
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="text-lg font-black uppercase tracking-widest text-brand-400">Audit in Progress</h3>
+              <div className="flex justify-center gap-1.5 py-1">
+                <span className="h-2 w-2 animate-bounce rounded-full bg-brand-400 [animation-delay:-0.3s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-brand-400 [animation-delay:-0.15s]" />
+                <span className="h-2 w-2 animate-bounce rounded-full bg-brand-400" />
+              </div>
+              <p className="text-sm font-semibold text-slate-200 mt-2 max-w-sm h-6 transition-all duration-300">
+                {STATUS_MESSAGES[statusIndex]}
+              </p>
+            </div>
+          </div>
+        )}
+
         <Tabs value={mode} onValueChange={(v) => setMode(v as Mode)}>
-          <TabsList className="mb-6">
+          <TabsList className="mb-6 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl p-1">
             {MODES.map((m) => (
-              <TabsTrigger key={m.key} value={m.key}>
+              <TabsTrigger key={m.key} value={m.key} className="rounded-lg py-2">
                 <m.icon className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">{m.label}</span>
               </TabsTrigger>
@@ -156,6 +206,7 @@ export function AnalysisPage() {
                 onChange={(e) => setText(e.target.value)}
                 placeholder="Paste the full job advertisement here..."
                 rows={10}
+                className="bg-white/50 dark:bg-slate-900/50"
               />
             </TabsContent>
             <TabsContent value="url">
@@ -166,6 +217,7 @@ export function AnalysisPage() {
                 onChange={(e) => setUrl(e.target.value)}
                 placeholder="https://example.com/careers/job-123"
                 icon={<Link2 className="h-4 w-4" aria-hidden="true" />}
+                className="bg-white/50 dark:bg-slate-900/50"
               />
             </TabsContent>
             <TabsContent value="pdf">
@@ -177,23 +229,12 @@ export function AnalysisPage() {
 
             {error && <Alert variant="error">{error}</Alert>}
 
-            <Button type="submit" isLoading={isSubmitting} className="w-full">
-              {isSubmitting ? 'Analyzing...' : 'Analyze'}
+            <Button type="submit" isLoading={isSubmitting} className="w-full h-11 text-base font-bold shadow-soft">
+              {isSubmitting ? 'Running Security Engine...' : 'Run Security Audit'}
             </Button>
           </form>
         </Tabs>
       </Card>
-
-      {isSubmitting && (
-        <div className="mt-6 flex flex-col items-center justify-center gap-3 text-slate-500 dark:text-slate-400">
-          <div className="flex gap-1">
-            <span className="h-2 w-2 animate-bounce rounded-full bg-brand-500 [animation-delay:-0.3s]" />
-            <span className="h-2 w-2 animate-bounce rounded-full bg-brand-500 [animation-delay:-0.15s]" />
-            <span className="h-2 w-2 animate-bounce rounded-full bg-brand-500" />
-          </div>
-          <span className="text-sm">Running preprocessing, classification, and explainability...</span>
-        </div>
-      )}
     </div>
   );
 }

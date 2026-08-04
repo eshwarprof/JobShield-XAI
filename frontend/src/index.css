@@ -44,6 +44,8 @@
 
   --animate-fade-in: fade-in 0.3s ease-out;
   --animate-fade-in-up: fade-in-up 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  --animate-float: float 6s ease-in-out infinite;
+  --animate-pulse-glow: pulse-glow 4s ease-in-out infinite;
 
   @keyframes fade-in {
     from {
@@ -61,6 +63,24 @@
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+  @keyframes float {
+    0%, 100% {
+      transform: translateY(0) rotate(0deg);
+    }
+    50% {
+      transform: translateY(-8px) rotate(0.5deg);
+    }
+  }
+  @keyframes pulse-glow {
+    0%, 100% {
+      opacity: 0.2;
+      filter: blur(50px);
+    }
+    50% {
+      opacity: 0.45;
+      filter: blur(70px);
     }
   }
 }
@@ -110,5 +130,25 @@
   }
   .scrollbar-thin::-webkit-scrollbar-thumb {
     @apply rounded-full bg-slate-300 dark:bg-slate-700;
+  }
+
+  /* 3D perspective utilities */
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+  
+  /* 3D tilt-on-hover effect */
+  .card-3d-hover {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.3s ease, border-color 0.3s ease;
+  }
+  .card-3d-hover:hover {
+    transform: translateY(-6px) rotateX(3.5deg) rotateY(-2deg);
+    box-shadow: 0 25px 35px -5px rgb(15 23 42 / 0.12), 0 12px 15px -5px rgb(15 23 42 / 0.06);
   }
 }

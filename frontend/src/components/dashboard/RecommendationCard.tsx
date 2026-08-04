@@ -21,7 +21,7 @@ export function RecommendationCard({
   return (
     <div
       className={cn(
-        'rounded-xl border border-slate-200 border-l-4 bg-white p-5 shadow-soft dark:border-slate-800 dark:bg-slate-900',
+        'rounded-xl border border-slate-200 border-l-4 bg-white p-5 shadow-soft card-3d-hover dark:border-slate-800 dark:bg-slate-900',
         RISK_BORDER[riskCategory]
       )}
     >

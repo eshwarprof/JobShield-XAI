@@ -42,9 +42,17 @@ describe("History routes", () => {
     await request(app).post("/api/analyze/text").set("Authorization", `Bearer ${token}`).send({ text: "first" });
     await request(app).post("/api/analyze/text").set("Authorization", `Bearer ${token}`).send({ text: "second" });
 
-    // Anonymous submission should never show up in this user's history
+    // A different user's submission should never show up in this user's history
+    const otherUserRes = await request(app)
+      .post("/api/auth/register")
+      .send({ name: "Other User", email: "other@example.com", password: "supersecret123" });
+    const otherToken = otherUserRes.body.accessToken;
+
     aiService.analyzeText.mockResolvedValueOnce(baseAiResult);
-    await request(app).post("/api/analyze/text").send({ text: "anonymous" });
+    await request(app)
+      .post("/api/analyze/text")
+      .set("Authorization", `Bearer ${otherToken}`)
+      .send({ text: "other user post" });
 
     const res = await request(app).get("/api/history").set("Authorization", `Bearer ${token}`);
     expect(res.status).toBe(200);

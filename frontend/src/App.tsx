@@ -17,6 +17,7 @@ import { AboutPage } from '@/pages/AboutPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { AdminPage } from '@/pages/AdminPage';
 import { NotFoundPage } from '@/pages/NotFoundPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
@@ -65,8 +66,16 @@ function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/about" element={<AboutPage />} />
-            <Route path="/analyze" element={<AnalysisPage />} />
+            <Route
+              path="/analyze"
+              element={
+                <ProtectedRoute>
+                  <AnalysisPage />
+                </ProtectedRoute>
+              }
+            />
             {/* Not wrapped in ProtectedRoute: the backend allows anyone holding
                 the id to view an anonymous (no-account) analysis (FR-11.3);
                 it 403s server-side for analyses owned by a different account. */}

@@ -1,6 +1,7 @@
 const express = require("express");
 const { body, param } = require("express-validator");
 const validate = require("../middleware/validate");
+const { requireAuth } = require("../middleware/auth");
 const { pdfUploadMiddleware, imageUploadMiddleware } = require("../middleware/upload");
 const analysisController = require("../controllers/analysisController");
 
@@ -12,6 +13,7 @@ const router = express.Router();
  *   post:
  *     summary: Analyze raw pasted job advertisement text (FR-1.1, UC-1)
  *     tags: [Analysis]
+ *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content:
@@ -23,10 +25,12 @@ const router = express.Router();
  *               text: { type: string }
  *     responses:
  *       201: { description: Completed analysis, persisted and returned. }
+ *       401: { description: Authentication required. }
  *       422: { description: Empty or missing text. }
  */
 router.post(
   "/text",
+  requireAuth,
   [body("text").trim().notEmpty().withMessage("Job advertisement text must not be empty.")],
   validate,
   analysisController.submitText
@@ -38,6 +42,7 @@ router.post(
  *   post:
  *     summary: Analyze a job advertisement URL (FR-1.2, UC-2)
  *     tags: [Analysis]
+ *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content:
@@ -49,10 +54,12 @@ router.post(
  *               url: { type: string, format: uri }
  *     responses:
  *       201: { description: Completed analysis, persisted and returned. }
+ *       401: { description: Authentication required. }
  *       422: { description: Malformed URL. }
  */
 router.post(
   "/url",
+  requireAuth,
   [
     body("url")
       .trim()
@@ -69,6 +76,7 @@ router.post(
  *   post:
  *     summary: Analyze an uploaded PDF recruitment notice (FR-1.3, UC-3)
  *     tags: [Analysis]
+ *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content:
@@ -80,9 +88,10 @@ router.post(
  *     responses:
  *       201: { description: Completed analysis, persisted and returned. }
  *       400: { description: Missing file or content does not match declared type. }
+ *       401: { description: Authentication required. }
  *       413: { description: File exceeds the maximum allowed size. }
  */
-router.post("/pdf", pdfUploadMiddleware, analysisController.submitPdf);
+router.post("/pdf", requireAuth, pdfUploadMiddleware, analysisController.submitPdf);
 
 /**
  * @openapi
@@ -90,6 +99,7 @@ router.post("/pdf", pdfUploadMiddleware, analysisController.submitPdf);
  *   post:
  *     summary: Analyze an uploaded screenshot/image via OCR (FR-1.4, UC-4)
  *     tags: [Analysis]
+ *     security: [{ bearerAuth: [] }]
  *     requestBody:
  *       required: true
  *       content:
@@ -101,9 +111,10 @@ router.post("/pdf", pdfUploadMiddleware, analysisController.submitPdf);
  *     responses:
  *       201: { description: Completed analysis, persisted and returned. }
  *       400: { description: Missing file or content does not match declared type. }
+ *       401: { description: Authentication required. }
  *       413: { description: File exceeds the maximum allowed size. }
  */
-router.post("/image", imageUploadMiddleware, analysisController.submitImage);
+router.post("/image", requireAuth, imageUploadMiddleware, analysisController.submitImage);
 
 /**
  * @openapi
