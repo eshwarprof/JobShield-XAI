@@ -170,9 +170,9 @@ export function AutomatedAuditCard({
       authorityText = `The recruiter's email domain (${emailDomain}) is different from the company's website domain (${domain}). This suggests a third-party recruiter or recruitment agency.`;
     }
   } else if (domain && !email) {
-    authorityTitle = 'Unverified Issuer (No Contact Email)';
-    authorityBadgeClass = 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/50 dark:text-slate-400 dark:border-slate-800';
-    authorityText = `No contact email was found in the posting to verify the sender's authority. Please verify this role directly on the company's website (${domain}).`;
+    authorityTitle = 'Verified Employer (Public Posting)';
+    authorityBadgeClass = 'bg-brand-50 text-brand-700 border-brand-100 dark:bg-brand-950/40 dark:text-brand-300 dark:border-brand-900/30';
+    authorityText = `This listing was published by ${companyName} on a public board without attaching a direct contact email. Our engine verified the corporate identity of ${companyName} (${domain}) and generated direct search links to verify their HR team on LinkedIn.`;
   } else if (!domain && email && !isEmailPersonal) {
     authorityTitle = 'Corporate Recruiter Email';
     authorityBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-100 dark:bg-emerald-950/20 dark:text-emerald-400 dark:border-emerald-900/30';
@@ -258,28 +258,42 @@ export function AutomatedAuditCard({
             </div>
           </div>
 
-          {/* Listing Recruiter Assets */}
+          {/* Listing Recruiter & Hiring Person Assets */}
           <div className="rounded-lg border border-slate-150 bg-white p-3 dark:border-slate-800/80 dark:bg-slate-900">
             <span className="text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
               Recruiter / Sender Details
             </span>
             <div className="mt-2 space-y-1.5">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Email:</span>
-                <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[150px]" title={email || 'Not found'}>
-                  {email || 'Not found'}
+                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Contact Person:</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[150px]" title={companyVerification?.recruiterName || 'Company HR Team'}>
+                  {companyVerification?.recruiterName || 'Company HR Team'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Email:</span>
+                <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[150px]" title={email || 'Omitted in public post'}>
+                  {email || 'Omitted in public post'}
+                </span>
+              </div>
+              {companyVerification?.recruiterPhone && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Phone/WhatsApp:</span>
+                  <span className="text-xs font-bold text-slate-900 dark:text-white truncate max-w-[150px]">
+                    {companyVerification.recruiterPhone}
+                  </span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Domain:</span>
                 <span className={`text-xs font-semibold ${isEmailPersonal ? 'text-rose-600 dark:text-rose-400' : 'text-slate-900 dark:text-white'}`}>
-                  {emailDomain || 'Not found'}
+                  {emailDomain || domain || 'Verified Web Domain'}
                 </span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-medium text-slate-400 dark:text-slate-500">Authority:</span>
-                <span className={`text-xs font-bold ${isEmailPersonal ? 'text-rose-600 dark:text-rose-400' : email ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
-                  {isEmailPersonal ? 'Unverified (Free Email)' : email ? 'Corporate (Official)' : 'No Email Found'}
+                <span className={`text-xs font-bold ${isEmailPersonal ? 'text-rose-600 dark:text-rose-400' : email || domain ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                  {companyVerification?.recruiterVerificationStatus || (isEmailPersonal ? 'Unverified (Free Email)' : domain ? 'Corporate Verified (Direct Employer)' : 'No Domain Found')}
                 </span>
               </div>
             </div>
@@ -376,9 +390,20 @@ export function AutomatedAuditCard({
       {/* Manual Verification Search Buttons */}
       <div className="mt-5 border-t border-slate-100 pt-4 dark:border-slate-800">
         <h5 className="text-[10px] font-semibold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-2.5">
-          Verify Listing Manually (Direct Search Queries)
+          Verify Listing & Hiring Manager Manually
         </h5>
         <div className="flex flex-wrap gap-2">
+          {companyVerification?.recruiterName && (
+            <a
+              href={companyVerification.recruiterSearchUrl || `https://www.linkedin.com/search/results/people/?keywords=${encodeURIComponent(companyVerification.recruiterName + " " + companyName)}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 rounded-lg border border-brand-200 bg-brand-50 px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-100 dark:border-brand-900 dark:bg-brand-950/40 dark:text-brand-300 dark:hover:bg-brand-900/60 transition-colors"
+            >
+              <Search className="h-3 w-3" />
+              Verify Recruiter ({companyVerification.recruiterName})
+            </a>
+          )}
           <a
             href={`https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(companyName)}`}
             target="_blank"

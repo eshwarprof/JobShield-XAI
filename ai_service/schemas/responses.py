@@ -15,6 +15,13 @@ class CompanyVerification(BaseModel):
     officialWebsite: str | None = None
     linkedinPage: str | None = None
     summary: str | None = None
+    recruiterName: str | None = None
+    recruiterEmail: str | None = None
+    recruiterPhone: str | None = None
+    recruiterDomain: str | None = None
+    isDomainMatch: bool = True
+    recruiterVerificationStatus: str | None = None
+    recruiterSearchUrl: str | None = None
     error: str | None = None
 
 

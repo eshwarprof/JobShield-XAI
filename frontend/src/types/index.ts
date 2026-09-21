@@ -38,6 +38,13 @@ export interface CompanyVerification {
   officialWebsite: string | null;
   linkedinPage: string | null;
   summary: string | null;
+  recruiterName?: string | null;
+  recruiterEmail?: string | null;
+  recruiterPhone?: string | null;
+  recruiterDomain?: string | null;
+  isDomainMatch?: boolean;
+  recruiterVerificationStatus?: string | null;
+  recruiterSearchUrl?: string | null;
   error: string | null;
 }
 

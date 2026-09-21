@@ -168,10 +168,115 @@ def _fields_from_generic_page(soup: BeautifulSoup) -> dict:
     }
 
 
+def _scrape_linkedin_job(url: str) -> dict | None:
+    """Specialized scraper for public LinkedIn job posting URLs using guest endpoint."""
+    import re
+    job_id_match = (
+        re.search(r'/jobs/view/(?:[^/]+-)?(\d+)', url) 
+        or re.search(r'currentJobId=(\d+)', url) 
+        or re.search(r'/view/(\d+)', url)
+    )
+    if not job_id_match:
+        return None
+
+    job_id = job_id_match.group(1)
+    guest_url = f"https://www.linkedin.com/jobs-guest/jobs/api/jobPosting/{job_id}"
+    
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    }
+
+    try:
+        resp = requests.get(guest_url, headers=headers, timeout=REQUEST_TIMEOUT_SECONDS)
+        if resp.status_code != 200:
+            return None
+
+        soup = BeautifulSoup(resp.text, "html.parser")
+
+        # 1. Job Title
+        title_tag = (
+            soup.find("h2", class_=re.compile(r"topcard__title|title", re.I))
+            or soup.find("h1")
+        )
+        title = title_tag.get_text(strip=True) if title_tag else None
+
+        # 2. Company Name
+        company_tag = (
+            soup.find("a", class_=re.compile(r"topcard__org-name-link|company", re.I))
+            or soup.find("span", class_=re.compile(r"topcard__flavor|company", re.I))
+        )
+        company_name = company_tag.get_text(strip=True) if company_tag else None
+
+        # 3. Location
+        location_tag = soup.find("span", class_=re.compile(r"topcard__flavor--bullet|location", re.I))
+        location = location_tag.get_text(strip=True) if location_tag else None
+
+        # 4. Recruiter / Hiring Team Details
+        recruiter_name = None
+        recruiter_title = None
+        recruiter_card = soup.find("div", class_=re.compile(r"message-the-recruiter|hiring-team|recruiter", re.I))
+        if recruiter_card:
+            name_tag = recruiter_card.find(["h3", "h4", "span", "strong", "a"], class_=re.compile(r"title|name|person", re.I))
+            if name_tag:
+                recruiter_name = name_tag.get_text(strip=True)
+            subtitle_tag = recruiter_card.find(["h4", "p", "div", "span"], class_=re.compile(r"subtitle|headline|role", re.I))
+            if subtitle_tag:
+                recruiter_title = subtitle_tag.get_text(strip=True)
+            link_tag = recruiter_card.find("a", href=re.compile(r"linkedin\.com/in/"))
+            if link_tag and not recruiter_name:
+                recruiter_name = link_tag.get_text(strip=True)
+
+        # 5. Job Description
+        desc_div = (
+            soup.find("div", class_=re.compile(r"description__text|show-more-less-html__markup", re.I))
+            or soup.find("section", class_=re.compile(r"description", re.I))
+        )
+        desc_text = desc_div.get_text(" ", strip=True) if desc_div else ""
+
+        if not desc_text and not title:
+            return None
+
+        # Construct full description incorporating recruiter metadata
+        meta_parts = []
+        if company_name:
+            meta_parts.append(f"Company: {company_name}")
+        if recruiter_name:
+            recruiter_str = f"Hiring Manager: {recruiter_name}"
+            if recruiter_title:
+                recruiter_str += f" ({recruiter_title})"
+            meta_parts.append(recruiter_str)
+        if location:
+            meta_parts.append(f"Location: {location}")
+
+        combined_desc = "\n".join(meta_parts) + "\n\n" + desc_text
+
+        return {
+            "title": title or "LinkedIn Job Posting",
+            "company_profile": company_name,
+            "description": combined_desc,
+            "requirements": None,
+            "benefits": None,
+            "location": location,
+            "salary_range": None,
+            "employment_type": None,
+        }
+    except Exception:
+        return None
+
+
 def scrape_job_posting(url: str) -> dict:
     """FR-1.2: returns fields in the standard shape (FIELD_ORDER-compatible)
     so the result flows through the identical downstream pipeline as any
     other input channel (FR-1.6)."""
+    # 1. Specialized handling for LinkedIn job URLs
+    if "linkedin.com" in url.lower():
+        linkedin_fields = _scrape_linkedin_job(url)
+        if linkedin_fields and len(linkedin_fields.get("description", "")) >= 50:
+            return linkedin_fields
+
+    # 2. General URL scraping
     response = _fetch_with_validated_redirects(url)
     if response.status_code != 200:
         raise ScrapingFailedError(f"The page returned HTTP {response.status_code}.")
@@ -188,3 +293,4 @@ def scrape_job_posting(url: str) -> dict:
             "or access-restricted). Try the Text or PDF/Image input mode instead."
         )
     return fields
+

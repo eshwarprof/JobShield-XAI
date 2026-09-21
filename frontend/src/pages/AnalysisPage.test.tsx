@@ -52,13 +52,13 @@ describe('AnalysisPage', () => {
     renderPage();
     expect(screen.getByPlaceholderText(/paste the full job advertisement/i)).toBeInTheDocument();
 
-    await userEvent.click(screen.getByRole('tab', { name: 'URL' }));
+    await userEvent.click(screen.getByRole('tab', { name: /url/i }));
     expect(screen.getByPlaceholderText(/https:\/\/example.com/i)).toBeInTheDocument();
   });
 
   it('shows a validation error instead of submitting empty text', async () => {
     renderPage();
-    await userEvent.click(screen.getByRole('button', { name: /analyze/i }));
+    await userEvent.click(screen.getByRole('button', { name: /run security audit|analyze/i }));
     expect(await screen.findByText(/please paste the job advertisement text/i)).toBeInTheDocument();
     expect(analysisApi.submitText).not.toHaveBeenCalled();
   });
@@ -72,7 +72,7 @@ describe('AnalysisPage', () => {
       screen.getByPlaceholderText(/paste the full job advertisement/i),
       'urgent hiring pay a fee'
     );
-    await userEvent.click(screen.getByRole('button', { name: /analyze/i }));
+    await userEvent.click(screen.getByRole('button', { name: /run security audit|analyze/i }));
 
     await waitFor(() => expect(analysisApi.getAnalysisById).toHaveBeenCalledWith('1'));
     await waitFor(() => expect(screen.getByText('Critical Risk')).toBeInTheDocument());

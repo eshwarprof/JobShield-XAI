@@ -12,19 +12,19 @@ FREE_DOMAINS = {
 }
 
 def extract_company_details_py(text: str) -> dict:
-    """Extract email, website, and company name heuristics from unstructured text."""
+    """Extract email, website, company name, recruiter details, and phone from text."""
     # Clean up sign-in form elements and login boilerplate from the text
-    text = re.sub(
+    cleaned_for_search = re.sub(
         r'\b(?:email or phone|password|sign in|join now|forgot password|show|hide|user agreement|privacy policy|cookie policy|agreement|policy|sign in with|new to linkedin)\b', 
         ' ', 
         text, 
         flags=re.IGNORECASE
     )
-    text = re.sub(r'\s+', ' ', text).strip()
+    cleaned_for_search = re.sub(r'\s+', ' ', cleaned_for_search).strip()
 
     # 1. Email extraction
     email_regex = re.compile(r'([a-zA-Z0-9._%+-]+)@([a-zA-Z0-9.-]+\.[a-zA-Z]{2,})')
-    email_match = email_regex.search(text)
+    email_match = email_regex.search(cleaned_for_search)
     email = email_match.group(0) if email_match else None
     email_domain = email_match.group(2).lower() if email_match else None
     is_email_personal = email_domain in FREE_DOMAINS if email_domain else False
@@ -32,7 +32,7 @@ def extract_company_details_py(text: str) -> dict:
     # 2. Website/domain extraction
     url_regex = re.compile(r'(?:https?://)?(?:www\.)?([a-zA-Z0-9-]+\.[a-zA-Z]{2,})')
     domain = None
-    for match in url_regex.finditer(text):
+    for match in url_regex.finditer(cleaned_for_search):
         d = match.group(1).lower()
         if d not in FREE_DOMAINS and d not in {
             'linkedin.com', 'naukri.com', 'google.com', 'yahoo.com', 'facebook.com', 
@@ -44,6 +44,7 @@ def extract_company_details_py(text: str) -> dict:
     if not domain and email_domain and not is_email_personal:
         domain = email_domain
 
+    # 3. Company Name extraction
     company_name = ""
     company_patterns = [
         re.compile(r'(?:company|employer|organization)\s*:\s*([a-zA-Z0-9\s\-&]{3,60})', re.IGNORECASE),
@@ -53,20 +54,67 @@ def extract_company_details_py(text: str) -> dict:
         re.compile(r'([a-zA-Z0-9\s\-&]{3,60})\s+(?:hiring|is hiring|is looking for)\b', re.IGNORECASE)
     ]
     for pattern in company_patterns:
-        match = pattern.search(text)
+        match = pattern.search(cleaned_for_search)
         if match and match.group(1):
-            company_name = match.group(1).strip()
-            break
+            candidate_company = match.group(1).strip()
+            # Clean trailing recruiter/contact labels
+            candidate_company = re.sub(r'\s+(?:job poster|hiring manager|recruiter|contact|posted by|hr).*$', '', candidate_company, flags=re.IGNORECASE).strip()
+            if candidate_company:
+                company_name = candidate_company
+                break
 
     if not company_name and domain:
         parts = domain.split('.')
         company_name = parts[0].capitalize()
 
+    # 4. Recruiter / Hiring Person Name extraction
+    recruiter_name = None
+    recruiter_patterns = [
+        re.compile(r'(?:hiring manager|recruiter|contact person|hr representative|posted by|job poster|poster|contact|hr manager|talent acquisition|hiring team|recruitment lead|talent partner|sourcer|posted by:?)\s*:\s*([a-zA-Z\s.]{3,40})', re.IGNORECASE),
+        re.compile(r'(?:reach out to|contact|email|message|connect with)\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+){1,2})', re.IGNORECASE),
+        re.compile(r'([A-Z][a-z]+\s+[A-Z][a-z]+)\s*,?\s*(?:-\s*)?(?:technical recruiter|recruiter|hr manager|talent acquisition|hiring manager|talent partner)', re.IGNORECASE),
+        re.compile(r'sincerely\s*,\s*([A-Z][a-z]+\s+[A-Z][a-z]+)', re.IGNORECASE)
+    ]
+    for pattern in recruiter_patterns:
+        match = pattern.search(cleaned_for_search)
+        if match and match.group(1):
+            possible_name = match.group(1).strip()
+            # Ensure it's not a generic label
+            if not any(x in possible_name.lower() for x in ['team', 'department', 'company', 'hiring', 'manager', 'group', 'services']):
+                recruiter_name = possible_name
+                break
+
+    # Fallback: Infer recruiter name from email prefix if no explicit label found
+    if not recruiter_name and email:
+        prefix = email.split('@')[0]
+        prefix_clean = re.sub(r'\d+', '', prefix).strip('._-')
+        parts = re.split(r'[._-]', prefix_clean)
+        generic_keywords = {
+            'hr', 'careers', 'jobs', 'support', 'contact', 'info', 'apply', 
+            'recruitment', 'hiring', 'admin', 'help', 'sales', 'team', 'office'
+        }
+        if len(parts) >= 2 and not any(p.lower() in generic_keywords for p in parts):
+            recruiter_name = " ".join(p.capitalize() for p in parts if len(p) >= 2)
+        elif len(parts) == 1 and len(parts[0]) >= 3 and parts[0].lower() not in generic_keywords:
+            recruiter_name = parts[0].capitalize()
+
+    # 5. Phone / WhatsApp extraction
+    phone_regex = re.compile(r'(?:phone|mobile|tel|whatsapp|call|contact)\s*:\s*([+\d\s\-\(\)]{8,20})', re.IGNORECASE)
+    phone_match = phone_regex.search(cleaned_for_search)
+    recruiter_phone = phone_match.group(1).strip() if phone_match else None
+    if not recruiter_phone:
+        raw_phone_match = re.search(r'\+?\d{1,4}[-.\s]?\(?\d{2,4}\)?[-.\s]?\d{3,4}[-.\s]?\d{3,4}', text)
+        if raw_phone_match:
+            recruiter_phone = raw_phone_match.group(0).strip()
+
     return {
         "company_name": company_name or "Unknown Company",
         "domain": domain,
         "email": email,
-        "email_domain": email_domain
+        "email_domain": email_domain,
+        "is_email_personal": is_email_personal,
+        "recruiter_name": recruiter_name,
+        "recruiter_phone": recruiter_phone
     }
 
 def search_ddg_links(query: str) -> list[str]:
@@ -157,9 +205,14 @@ def fetch_ddg_overview(company_name: str) -> str | None:
     return None
 
 def verify_company_details(text: str) -> dict:
-    """Verifies company details online using search heuristics."""
+    """Verifies company and recruiter details online using search heuristics."""
     details = extract_company_details_py(text)
     company_name = details["company_name"]
+    email = details["email"]
+    email_domain = details["email_domain"]
+    is_email_personal = details["is_email_personal"]
+    recruiter_name = details["recruiter_name"]
+    recruiter_phone = details["recruiter_phone"]
     
     if company_name == "Unknown Company":
         return {
@@ -168,6 +221,13 @@ def verify_company_details(text: str) -> dict:
             "officialWebsite": None,
             "linkedinPage": None,
             "summary": None,
+            "recruiterName": recruiter_name,
+            "recruiterEmail": email,
+            "recruiterPhone": recruiter_phone,
+            "recruiterDomain": email_domain,
+            "isDomainMatch": False,
+            "recruiterVerificationStatus": "Unverified - No Company Name Extracted",
+            "recruiterSearchUrl": None,
             "error": "No company name could be extracted from the posting text."
         }
 
@@ -197,6 +257,56 @@ def verify_company_details(text: str) -> dict:
     if not linkedin_page:
         linkedin_page = f"https://www.linkedin.com/company/{company_name.lower().replace(' ', '-')}"
 
+    # Extract official domain from official website if found
+    official_domain = details["domain"]
+    if official_website:
+        try:
+            parsed_official = urllib.parse.urlparse(official_website)
+            official_domain = parsed_official.netloc.lower().replace('www.', '')
+        except Exception:
+            pass
+
+    # Domain Match & Recruiter Verification Logic
+    is_domain_match = True
+    recruiter_status = "Corporate Recruiter Verified"
+
+    if is_email_personal:
+        is_domain_match = False
+        recruiter_status = "Unverified (Personal Email Address)"
+    elif email_domain and official_domain:
+        clean_email_dom = email_domain.replace('www.', '')
+        clean_off_dom = official_domain.replace('www.', '')
+        if clean_email_dom == clean_off_dom or clean_off_dom.endswith('.' + clean_email_dom) or clean_email_dom.endswith('.' + clean_off_dom):
+            is_domain_match = True
+            recruiter_status = "Verified Direct Corporate Recruiter"
+        else:
+            is_domain_match = False
+            recruiter_status = "Domain Mismatch (Third-Party / Suspicious)"
+    elif email_domain and not is_email_personal:
+        is_domain_match = True
+        recruiter_status = "Corporate Domain Recruiter"
+    elif not email:
+        is_domain_match = False
+    # Active HR / Poster discovery search if no recruiter name was directly in the post
+    if not recruiter_name and company_name != "Unknown Company":
+        hr_links = search_ddg_links(f'"{company_name}" recruiter OR HR OR "hiring manager" site:linkedin.com/in')
+        if hr_links:
+            first_hr_link = hr_links[0]
+            parsed_hr = urllib.parse.urlparse(first_hr_link)
+            handle = parsed_hr.path.strip('/').replace('in/', '')
+            clean_handle = re.sub(r'-\d+$', '', handle).replace('-', ' ')
+            if len(clean_handle) >= 3 and not any(x in clean_handle.lower() for x in ['search', 'jobs', 'company']):
+                recruiter_name = clean_handle.title() + " (Discovered HR Profile)"
+
+    # Recruiter LinkedIn search URL
+    if recruiter_name:
+        clean_search_name = recruiter_name.replace(" (Discovered HR Profile)", "")
+        query_str = urllib.parse.quote(f"{clean_search_name} {company_name} linkedin")
+        recruiter_search_url = f"https://www.google.com/search?q={query_str}"
+    else:
+        query_str = urllib.parse.quote(f"{company_name} recruiter HR team linkedin")
+        recruiter_search_url = f"https://www.google.com/search?q={query_str}"
+
     # Fetch summary/overview
     summary = fetch_wikipedia_summary(company_name)
     if not summary:
@@ -210,5 +320,13 @@ def verify_company_details(text: str) -> dict:
         "officialWebsite": official_website,
         "linkedinPage": linkedin_page,
         "summary": summary,
+        "recruiterName": recruiter_name,
+        "recruiterEmail": email,
+        "recruiterPhone": recruiter_phone,
+        "recruiterDomain": email_domain,
+        "isDomainMatch": is_domain_match,
+        "recruiterVerificationStatus": recruiter_status,
+        "recruiterSearchUrl": recruiter_search_url,
         "error": None
     }
+
