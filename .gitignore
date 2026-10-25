@@ -61,3 +61,4 @@ logs/
 # --- Misc project scratch ---
 .claude/
 *.docx
+!deliverables/*.docx

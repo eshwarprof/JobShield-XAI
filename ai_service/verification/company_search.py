@@ -5,6 +5,8 @@ import logging
 
 logger = logging.getLogger("ai_service.company_search")
 
+SEARCH_TIMEOUT_SECONDS = 3
+
 FREE_DOMAINS = {
     'gmail.com', 'yahoo.com', 'hotmail.com', 'outlook.com', 'live.com', 
     'icloud.com', 'mail.com', 'zoho.com', 'protonmail.com', 'yandex.com', 
@@ -127,7 +129,7 @@ def search_ddg_links(query: str) -> list[str]:
         headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'}
     )
     try:
-        with urllib.request.urlopen(req, timeout=8) as response:
+        with urllib.request.urlopen(req, timeout=SEARCH_TIMEOUT_SECONDS) as response:
             html = response.read().decode('utf-8', errors='ignore')
             links = re.findall(r'href=["\'](https?://[^"\']+)["\']', html)
             filtered = []
@@ -168,7 +170,7 @@ def fetch_wikipedia_summary(company_name: str) -> str | None:
             api_url,
             headers={'User-Agent': 'JobShieldBot/1.0 (contact@jobshield.xai)'}
         )
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=SEARCH_TIMEOUT_SECONDS) as response:
             import json
             data = json.loads(response.read().decode('utf-8'))
             extract = data.get("extract")
@@ -188,7 +190,7 @@ def fetch_ddg_overview(company_name: str) -> str | None:
             data=data,
             headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
         )
-        with urllib.request.urlopen(req, timeout=5) as response:
+        with urllib.request.urlopen(req, timeout=SEARCH_TIMEOUT_SECONDS) as response:
             html = response.read().decode('utf-8', errors='ignore')
             snippets = re.findall(r'<td class=["\']result-snippet["\']>(.*?)<\/td>', html, re.DOTALL)
             if snippets:
